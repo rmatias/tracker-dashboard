@@ -10,6 +10,65 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
+# Password protection
+def check_password():
+    """Returns True if the user entered the correct password."""
+    
+    def password_entered():
+        if st.session_state["password"] == st.secrets["DASHBOARD_PASSWORD"]:
+            st.session_state["password_correct"] = True
+            del st.session_state["password"]  # Don't store password
+        else:
+            st.session_state["password_correct"] = False
+
+    if "password_correct" not in st.session_state:
+        # First run, show password input
+        st.markdown("""
+        <style>
+            .stApp { background: #f8f9fa; }
+            .password-container {
+                max-width: 400px;
+                margin: 15vh auto;
+                padding: 2rem;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                text-align: center;
+            }
+            .password-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #2d3748;
+                margin-bottom: 0.5rem;
+            }
+            .password-hint {
+                color: #6c757d;
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
+        st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        return False
+    
+    elif not st.session_state["password_correct"]:
+        # Password incorrect, show input + error
+        st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
+        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.error("Wrong password. Try again!")
+        return False
+    
+    else:
+        # Password correct
+        return True
+
+if not check_password():
+    st.stop()
+
 # Kinetikos Health color palette
 st.markdown("""
 <style>
