@@ -5,7 +5,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="tracKer Dashboard",
-    page_icon="🦓",
+    page_icon="🚶",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -59,7 +59,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown(f'<div class="password-title">🦓 trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title"><span style="color:#E8913A;">trac{walking_k_small}er</span> <span style="color:#2d3748;">Dashboard</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
@@ -93,7 +93,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown(f'<div class="password-title">🦓 trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title"><span style="color:#E8913A;">trac{walking_k_small}er</span> <span style="color:#2d3748;">Dashboard</span></div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
