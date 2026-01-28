@@ -4,7 +4,7 @@ import pandas as pd
 from datetime import datetime
 
 st.set_page_config(
-    page_title="tracKer Dashboard",
+    page_title="TracKer Dashboard",
     page_icon="🚶",
     layout="wide",
     initial_sidebar_state="collapsed"
