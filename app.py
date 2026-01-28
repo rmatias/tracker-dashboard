@@ -50,7 +50,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown('<div class="password-title">tracKer Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
