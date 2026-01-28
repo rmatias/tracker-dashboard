@@ -154,6 +154,11 @@ st.markdown("""
     
     /* Style the selectbox */
     .stSelectbox label { color: #2d3748; font-weight: 500; }
+    
+    /* Make chart lines thicker */
+    .stLineChart svg path {
+        stroke-width: 3px !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -263,7 +268,7 @@ timeline = pd.read_sql("""
 
 if not timeline.empty:
     chart_data = timeline.set_index('date')[['active', 'passive']]
-    st.area_chart(chart_data, color=["#E8913A", "#3d4f5f"], height=280)
+    st.line_chart(chart_data, color=["#E8913A", "#3d4f5f"], height=280)
     
     # Stats row
     stat_cols = st.columns(4)
@@ -386,13 +391,15 @@ if user_list:
             user_chunks['Type'] = user_chunks['chunk_id'].apply(
                 lambda x: '🚶 Active' if str(x).startswith('active_') else '📱 Passive'
             )
+            user_chunks['Duration'] = (pd.to_datetime(user_chunks['end_time']) - pd.to_datetime(user_chunks['start_time'])).apply(
+                lambda x: f"{int(x.total_seconds() // 60)} min" if pd.notna(x) else 'N/A'
+            )
             user_chunks['start_time'] = pd.to_datetime(user_chunks['start_time']).dt.strftime('%Y-%m-%d %H:%M')
             user_chunks['end_time'] = pd.to_datetime(user_chunks['end_time']).dt.strftime('%Y-%m-%d %H:%M')
             
-            display_df = user_chunks[['Type', 'start_time', 'end_time', 'chunk_id']].rename(columns={
+            display_df = user_chunks[['Type', 'start_time', 'end_time', 'Duration']].rename(columns={
                 'start_time': 'Start',
-                'end_time': 'End',
-                'chunk_id': 'Chunk ID'
+                'end_time': 'End'
             })
             
             st.dataframe(display_df, use_container_width=True, height=300)
