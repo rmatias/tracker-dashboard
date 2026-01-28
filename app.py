@@ -1,74 +1,414 @@
-import streamlit as st                                                                                                                                                            
-import psycopg2                                                                                                                                                                   
-import pandas as pd                                                                                                                                                               
-                                                                                                                                                                                
-st.set_page_config(page_title="tracKer Dashboard", layout="wide")                                                                                                                 
-st.title("tracKer Dashboard")                                                                                                                                                     
-                                                                                                                                                                                
-@st.cache_resource                                                                                                                                                                
-def get_connection():                                                                                                                                                             
-  return psycopg2.connect(                                                                                                                                                      
-      host=st.secrets["DB_HOST"],                                                                                                                                               
-      port=st.secrets["DB_PORT"],                                                                                                                                               
-      database=st.secrets["DB_NAME"],                                                                                                                                           
-      user=st.secrets["DB_USER"],                                                                                                                                               
-      password=st.secrets["DB_PASSWORD"],                                                                                                                                       
-      sslmode="require"                                                                                                                                                         
-  )                                                                                                                                                                             
-                                                                                                                                                                                
-conn = get_connection()                                                                                                                                                           
-                                                                                                                                                                                
-# Row 1: Key Metrics                                                                                                                                                              
-col1, col2, col3 = st.columns(3)                                                                                                                                                  
-                                                                                                                                                                                
-with col1:                                                                                                                                                                        
-  users = pd.read_sql("SELECT COUNT(DISTINCT user_id) as count FROM sensor_readings", conn)                                                                                     
-  st.metric("Total Users", users.iloc[0, 0])                                                                                                                                    
-                                                                                                                                                                                
-with col2:                                                                                                                                                                        
-  passive = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'passive_%'", conn)                                                                  
-  st.metric("Passive Chunks", passive.iloc[0, 0])                                                                                                                               
-                                                                                                                                                                                
-with col3:                                                                                                                                                                        
-  active = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'active_%'", conn)                                                                    
-  st.metric("Active Chunks", active.iloc[0, 0])                                                                                                                                 
-                                                                                                                                                                                
-# Row 2: Top 3 Users                                                                                                                                                              
-st.subheader("Top 3 Users by Uploads")                                                                                                                                            
-top_users = pd.read_sql("""                                                                                                                                                       
-  SELECT user_id, COUNT(*) as total_uploads                                                                                                                                     
-  FROM sensor_readings                                                                                                                                                          
-  GROUP BY user_id                                                                                                                                                              
-  ORDER BY total_uploads DESC                                                                                                                                                   
-  LIMIT 3                                                                                                                                                                       
-""", conn)                                                                                                                                                                        
-top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]                                                                                                                          
-st.dataframe(top_users, use_container_width=True)                                                                                                                                 
-                                                                                                                                                                                
-# Row 3: Chunks over time                                                                                                                                                         
-st.subheader("Chunks Uploaded Over Time")                                                                                                                                         
-timeline = pd.read_sql("""                                                                                                                                                        
-  SELECT DATE(start_time) as date,                                                                                                                                              
-         SUM(CASE WHEN chunk_id LIKE 'active_%' THEN 1 ELSE 0 END) as active,                                                                                                   
-         SUM(CASE WHEN chunk_id LIKE 'passive_%' THEN 1 ELSE 0 END) as passive                                                                                                  
-  FROM sensor_readings                                                                                                                                                          
-  WHERE start_time > NOW() - INTERVAL '30 days'                                                                                                                                 
-  GROUP BY date ORDER BY date                                                                                                                                                   
-""", conn)                                                                                                                                                                        
-if not timeline.empty:                                                                                                                                                            
-  st.line_chart(timeline.set_index('date'))                                                                                                                                     
-else:                                                                                                                                                                             
-  st.info("No data in the last 30 days")                                                                                                                                        
-                                                                                                                                                                                
-# Row 4: Filter by user                                                                                                                                                           
-st.subheader("Filter by User")                                                                                                                                                    
-user_ids = pd.read_sql("SELECT DISTINCT user_id FROM sensor_readings", conn)                                                                                                      
-selected_user = st.selectbox("Select User", user_ids['user_id'].tolist())                                                                                                         
-                                                                                                                                                                                
-if selected_user:                                                                                                                                                                 
-  user_chunks = pd.read_sql("""                                                                                                                                                 
-      SELECT start_time, end_time, chunk_id                                                                                                                                     
-      FROM sensor_readings WHERE user_id = %s                                                                                                                                   
-      ORDER BY start_time DESC LIMIT 50                                                                                                                                         
-  """, conn, params=(selected_user,))                                                                                                                                           
-  st.dataframe(user_chunks, use_container_width=True)
+import streamlit as st
+import psycopg2
+import pandas as pd
+from datetime import datetime
+
+st.set_page_config(
+    page_title="tracKer Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
+
+# Clean, light theme CSS
+st.markdown("""
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    .stApp {
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+    }
+    
+    * { font-family: 'Inter', sans-serif; }
+    
+    .main-header {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        text-align: center;
+        padding: 1rem 0;
+    }
+    
+    .main-header span {
+        background: linear-gradient(90deg, #6366f1, #8b5cf6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .sub-header {
+        color: #64748b;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+    
+    .metric-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+        text-align: center;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .metric-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    
+    .metric-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    
+    .metric-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .metric-label {
+        color: #64748b;
+        font-size: 0.9rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 0.25rem;
+    }
+    
+    .section-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+        margin: 2rem 0 1rem 0;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .podium-card {
+        background: white;
+        border-radius: 16px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .gold-border { border-top: 4px solid #fbbf24; }
+    .silver-border { border-top: 4px solid #9ca3af; }
+    .bronze-border { border-top: 4px solid #d97706; }
+    
+    .rank-badge {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .user-id {
+        font-size: 0.85rem;
+        color: #64748b;
+        word-break: break-all;
+        margin: 0.5rem 0;
+    }
+    
+    .upload-count {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+    }
+    
+    .stat-box {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .stat-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        text-transform: uppercase;
+    }
+    
+    .stat-value {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1e293b;
+    }
+    
+    .user-select-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
+    }
+    
+    .empty-state {
+        background: white;
+        border-radius: 16px;
+        padding: 3rem;
+        text-align: center;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    }
+    
+    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
+    .empty-title { font-size: 1.1rem; color: #1e293b; font-weight: 600; }
+    .empty-desc { font-size: 0.9rem; color: #64748b; }
+    
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+</style>
+""", unsafe_allow_html=True)
+
+# Header
+st.markdown('<h1 class="main-header">📊 <span>tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<p class="sub-header">Real-time Sensor Analytics</p>', unsafe_allow_html=True)
+
+@st.cache_resource
+def get_connection():
+    return psycopg2.connect(
+        host=st.secrets["DB_HOST"],
+        port=st.secrets["DB_PORT"],
+        database=st.secrets["DB_NAME"],
+        user=st.secrets["DB_USER"],
+        password=st.secrets["DB_PASSWORD"],
+        sslmode="require"
+    )
+
+conn = get_connection()
+
+# Row 1: Key Metrics
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    users = pd.read_sql("SELECT COUNT(DISTINCT user_id) as count FROM sensor_readings", conn)
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-icon">👥</div>
+        <div class="metric-value">{users.iloc[0, 0]:,}</div>
+        <div class="metric-label">Total Users</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    passive = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'passive_%'", conn)
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-icon">🌙</div>
+        <div class="metric-value">{passive.iloc[0, 0]:,}</div>
+        <div class="metric-label">Passive Chunks</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    active = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'active_%'", conn)
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-icon">⚡</div>
+        <div class="metric-value">{active.iloc[0, 0]:,}</div>
+        <div class="metric-label">Active Chunks</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Row 2: Top 3 Users
+st.markdown('<div class="section-title">🏆 Top 3 Users by Uploads</div>', unsafe_allow_html=True)
+
+top_users = pd.read_sql("""
+    SELECT user_id, COUNT(*) as total_uploads
+    FROM sensor_readings
+    GROUP BY user_id
+    ORDER BY total_uploads DESC
+    LIMIT 3
+""", conn)
+
+if len(top_users) >= 1:
+    podium_cols = st.columns(3)
+    
+    medals = ["🥇", "🥈", "🥉"]
+    borders = ["gold-border", "silver-border", "bronze-border"]
+    
+    for i, col in enumerate(podium_cols):
+        with col:
+            if i < len(top_users):
+                user = top_users.iloc[i]
+                user_display = user['user_id'][:16] + "..." if len(str(user['user_id'])) > 16 else user['user_id']
+                st.markdown(f"""
+                <div class="podium-card {borders[i]}">
+                    <div class="rank-badge">{medals[i]}</div>
+                    <div class="user-id">{user_display}</div>
+                    <div class="upload-count">{user['total_uploads']:,}</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">uploads</div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div class="podium-card {borders[i]}">
+                    <div class="rank-badge">{medals[i]}</div>
+                    <div class="user-id">—</div>
+                    <div class="upload-count">0</div>
+                    <div style="font-size: 0.75rem; color: #64748b;">uploads</div>
+                </div>
+                """, unsafe_allow_html=True)
+else:
+    top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]
+    st.dataframe(top_users, use_container_width=True)
+
+# Row 3: Chunks over time
+st.markdown('<div class="section-title">📈 Chunks Uploaded Over Time</div>', unsafe_allow_html=True)
+
+timeline = pd.read_sql("""
+    SELECT DATE(start_time) as date,
+           SUM(CASE WHEN chunk_id LIKE 'active_%' THEN 1 ELSE 0 END) as active,
+           SUM(CASE WHEN chunk_id LIKE 'passive_%' THEN 1 ELSE 0 END) as passive
+    FROM sensor_readings
+    WHERE start_time > NOW() - INTERVAL '30 days'
+    GROUP BY date ORDER BY date
+""", conn)
+
+if not timeline.empty:
+    chart_data = timeline.set_index('date')[['active', 'passive']]
+    st.area_chart(chart_data, color=["#8b5cf6", "#6366f1"], height=300)
+    
+    # Stats row
+    stat_cols = st.columns(4)
+    total_chunks = int(timeline['active'].sum() + timeline['passive'].sum())
+    avg_daily = total_chunks / max(len(timeline), 1)
+    
+    with stat_cols[0]:
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Total (30d)</div>
+            <div class="stat-value">{total_chunks:,}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with stat_cols[1]:
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Daily Avg</div>
+            <div class="stat-value">{avg_daily:.0f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with stat_cols[2]:
+        peak_idx = (timeline['active'] + timeline['passive']).idxmax()
+        peak_day = str(timeline.loc[peak_idx, 'date'])
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Peak Day</div>
+            <div class="stat-value" style="font-size: 1rem;">{peak_day}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with stat_cols[3]:
+        passive_sum = timeline['passive'].sum()
+        ratio = timeline['active'].sum() / passive_sum if passive_sum > 0 else 0
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Active/Passive</div>
+            <div class="stat-value">{ratio:.2f}</div>
+        </div>
+        """, unsafe_allow_html=True)
+else:
+    st.markdown("""
+    <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div class="empty-title">No data in the last 30 days</div>
+        <div class="empty-desc">Start collecting sensor data to see activity here</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Row 4: Filter by user
+st.markdown('<div class="section-title">🔍 Filter by User</div>', unsafe_allow_html=True)
+
+user_ids = pd.read_sql("SELECT DISTINCT user_id FROM sensor_readings", conn)
+user_list = user_ids['user_id'].tolist()
+
+if user_list:
+    selected_user = st.selectbox(
+        "Select User",
+        user_list,
+        format_func=lambda x: f"{x[:30]}..." if len(str(x)) > 30 else x
+    )
+    
+    if selected_user:
+        # Use cursor for parameterized query to avoid pandas issues
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN chunk_id LIKE 'active_%%' THEN 1 ELSE 0 END) as active,
+                SUM(CASE WHEN chunk_id LIKE 'passive_%%' THEN 1 ELSE 0 END) as passive,
+                MIN(start_time) as first_upload,
+                MAX(start_time) as last_upload
+            FROM sensor_readings 
+            WHERE user_id = %s
+        """, (selected_user,))
+        stats_row = cursor.fetchone()
+        cursor.close()
+        
+        # Display user stats
+        user_stat_cols = st.columns(4)
+        with user_stat_cols[0]:
+            st.markdown(f"""
+            <div class="stat-box">
+                <div class="stat-label">Total Chunks</div>
+                <div class="stat-value">{stats_row[0]:,}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with user_stat_cols[1]:
+            st.markdown(f"""
+            <div class="stat-box">
+                <div class="stat-label">⚡ Active</div>
+                <div class="stat-value">{stats_row[1]:,}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with user_stat_cols[2]:
+            st.markdown(f"""
+            <div class="stat-box">
+                <div class="stat-label">🌙 Passive</div>
+                <div class="stat-value">{stats_row[2]:,}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with user_stat_cols[3]:
+            last_upload = stats_row[4].strftime('%Y-%m-%d') if stats_row[4] else 'N/A'
+            st.markdown(f"""
+            <div class="stat-box">
+                <div class="stat-label">Last Upload</div>
+                <div class="stat-value" style="font-size: 1rem;">{last_upload}</div>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # User chunks table - use cursor for parameterized query
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT start_time, end_time, chunk_id
+            FROM sensor_readings WHERE user_id = %s
+            ORDER BY start_time DESC LIMIT 50
+        """, (selected_user,))
+        rows = cursor.fetchall()
+        cursor.close()
+        
+        if rows:
+            user_chunks = pd.DataFrame(rows, columns=['start_time', 'end_time', 'chunk_id'])
+            user_chunks['Type'] = user_chunks['chunk_id'].apply(
+                lambda x: '⚡ Active' if str(x).startswith('active_') else '🌙 Passive'
+            )
+            user_chunks['start_time'] = pd.to_datetime(user_chunks['start_time']).dt.strftime('%Y-%m-%d %H:%M')
+            user_chunks['end_time'] = pd.to_datetime(user_chunks['end_time']).dt.strftime('%Y-%m-%d %H:%M')
+            
+            display_df = user_chunks[['Type', 'start_time', 'end_time', 'chunk_id']].rename(columns={
+                'start_time': 'Start',
+                'end_time': 'End',
+                'chunk_id': 'Chunk ID'
+            })
+            
+            st.dataframe(display_df, use_container_width=True, height=350)
+else:
+    st.info("No users found in the database yet.")
+
+# Footer
+st.markdown(f"""
+<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 2rem 0 1rem 0;">
+    tracKer Dashboard • Last updated {datetime.now().strftime('%H:%M:%S')}
+</div>
+""", unsafe_allow_html=True)
