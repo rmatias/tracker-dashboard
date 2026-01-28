@@ -118,7 +118,7 @@ st.markdown("""
     * { font-family: 'Inter', sans-serif; }
     
     .main-header {
-        font-size: 3.5rem;
+        font-size: 3rem;
         font-weight: 700;
         color: #2d3748;
         text-align: center;
@@ -127,8 +127,8 @@ st.markdown("""
     
     .walking-k {
         display: inline-block;
-        width: 52px;
-        height: 68px;
+        width: 44px;
+        height: 58px;
         vertical-align: middle;
         margin: 0 -2px;
     }
@@ -511,7 +511,7 @@ if user_list:
                 'end_time': 'End'
             })
             
-            st.dataframe(display_df, use_container_width=True, height=300)
+            st.dataframe(display_df, use_container_width=True, height=300, hide_index=True)
 else:
     st.info("No users found in the database yet.")
 
