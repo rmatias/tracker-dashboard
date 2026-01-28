@@ -1,9 +1,7 @@
 import streamlit as st
 import psycopg2
 import pandas as pd
-import plotly.express as px
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
+from datetime import datetime
 
 # Page config with custom theme
 st.set_page_config(
@@ -112,81 +110,6 @@ st.markdown("""
         border-bottom: 2px solid rgba(102,126,234,0.3);
     }
     
-    /* Podium styling */
-    .podium-container {
-        display: flex;
-        justify-content: center;
-        align-items: flex-end;
-        gap: 1rem;
-        padding: 2rem 0;
-    }
-    
-    .podium-item {
-        text-align: center;
-        padding: 1rem;
-        border-radius: 15px;
-        transition: transform 0.3s ease;
-    }
-    
-    .podium-item:hover {
-        transform: scale(1.05);
-    }
-    
-    .gold {
-        background: linear-gradient(145deg, #ffd700 0%, #b8860b 100%);
-        min-height: 180px;
-    }
-    
-    .silver {
-        background: linear-gradient(145deg, #c0c0c0 0%, #808080 100%);
-        min-height: 140px;
-    }
-    
-    .bronze {
-        background: linear-gradient(145deg, #cd7f32 0%, #8b4513 100%);
-        min-height: 100px;
-    }
-    
-    .podium-rank {
-        font-size: 2rem;
-        font-weight: 700;
-    }
-    
-    .podium-user {
-        font-size: 0.9rem;
-        font-weight: 600;
-        word-break: break-all;
-        max-width: 150px;
-    }
-    
-    .podium-count {
-        font-size: 1.2rem;
-        font-weight: 500;
-        margin-top: 0.5rem;
-    }
-    
-    /* Data table styling */
-    .dataframe {
-        background: #1e1e30 !important;
-        border-radius: 10px !important;
-    }
-    
-    /* Selectbox styling */
-    .stSelectbox > div > div {
-        background: #1e1e30;
-        border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 10px;
-    }
-    
-    /* Chart container */
-    .chart-container {
-        background: linear-gradient(145deg, #1e1e30 0%, #2a2a4a 100%);
-        border-radius: 20px;
-        padding: 1.5rem;
-        border: 1px solid rgba(255,255,255,0.1);
-        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-    }
-    
     /* Status indicator */
     .status-online {
         display: inline-block;
@@ -268,6 +191,14 @@ st.markdown("""
     @keyframes fadeIn {
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Chart styling */
+    .stAreaChart {
+        background: linear-gradient(145deg, #1e1e30 0%, #2a2a4a 100%);
+        border-radius: 20px;
+        padding: 1rem;
+        border: 1px solid rgba(255,255,255,0.1);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -404,9 +335,11 @@ if len(top_users) >= 3:
             </div>
         </div>
         """, unsafe_allow_html=True)
-else:
+elif len(top_users) > 0:
     top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]
     st.dataframe(top_users, use_container_width=True)
+else:
+    st.info("No users found yet")
 
 st.markdown('<div class="custom-divider"></div>', unsafe_allow_html=True)
 
@@ -423,61 +356,9 @@ timeline = pd.read_sql("""
 """, conn)
 
 if not timeline.empty:
-    # Create beautiful Plotly chart
-    fig = go.Figure()
-    
-    # Add passive area
-    fig.add_trace(go.Scatter(
-        x=timeline['date'],
-        y=timeline['passive'],
-        name='Passive',
-        fill='tozeroy',
-        fillcolor='rgba(102, 126, 234, 0.3)',
-        line=dict(color='#667eea', width=3),
-        mode='lines',
-        hovertemplate='<b>%{x}</b><br>Passive: %{y}<extra></extra>'
-    ))
-    
-    # Add active area
-    fig.add_trace(go.Scatter(
-        x=timeline['date'],
-        y=timeline['active'],
-        name='Active',
-        fill='tozeroy',
-        fillcolor='rgba(118, 75, 162, 0.3)',
-        line=dict(color='#764ba2', width=3),
-        mode='lines',
-        hovertemplate='<b>%{x}</b><br>Active: %{y}<extra></extra>'
-    ))
-    
-    fig.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)',
-        paper_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#8892b0', family='Inter'),
-        legend=dict(
-            orientation="h",
-            yanchor="bottom",
-            y=1.02,
-            xanchor="right",
-            x=1,
-            font=dict(size=12)
-        ),
-        margin=dict(l=20, r=20, t=40, b=20),
-        xaxis=dict(
-            showgrid=True,
-            gridcolor='rgba(255,255,255,0.05)',
-            tickfont=dict(size=11)
-        ),
-        yaxis=dict(
-            showgrid=True,
-            gridcolor='rgba(255,255,255,0.05)',
-            tickfont=dict(size=11)
-        ),
-        hovermode='x unified',
-        height=350
-    )
-    
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+    # Use native Streamlit area chart
+    chart_data = timeline.set_index('date')[['passive', 'active']]
+    st.area_chart(chart_data, color=["#667eea", "#764ba2"], height=350)
     
     # Summary stats below chart
     stat_cols = st.columns(4)
@@ -506,7 +387,8 @@ if not timeline.empty:
         </div>
         """, unsafe_allow_html=True)
     with stat_cols[3]:
-        ratio = timeline['active'].sum() / max(timeline['passive'].sum(), 1)
+        passive_sum = timeline['passive'].sum()
+        ratio = timeline['active'].sum() / passive_sum if passive_sum > 0 else 0
         st.markdown(f"""
         <div class="info-box">
             <div style="font-size: 0.8rem; color: #8892b0;">Active/Passive Ratio</div>
@@ -539,11 +421,12 @@ col_select, col_info = st.columns([2, 1])
 with col_select:
     selected_user = st.selectbox(
         "Select a user to view their activity",
-        user_list,
-        format_func=lambda x: f"👤 {x[:20]}..." if len(x) > 20 else f"👤 {x}"
+        user_list if user_list else ["No users available"],
+        format_func=lambda x: f"👤 {x[:20]}..." if len(str(x)) > 20 else f"👤 {x}",
+        disabled=len(user_list) == 0
     )
 
-if selected_user:
+if selected_user and user_list:
     # User stats card
     user_stats = pd.read_sql("""
         SELECT 
@@ -620,7 +503,7 @@ if selected_user:
     # Format the dataframe
     if not user_chunks.empty:
         user_chunks['Type'] = user_chunks['chunk_id'].apply(
-            lambda x: '⚡ Active' if x.startswith('active_') else '🌙 Passive'
+            lambda x: '⚡ Active' if str(x).startswith('active_') else '🌙 Passive'
         )
         user_chunks['Duration'] = (user_chunks['end_time'] - user_chunks['start_time']).apply(
             lambda x: f"{x.total_seconds():.0f}s" if pd.notna(x) else 'N/A'
