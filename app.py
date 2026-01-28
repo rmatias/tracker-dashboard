@@ -3,11 +3,18 @@ import psycopg2
 import pandas as pd                                                                                                                                                               
                                                                                                                                                                                   
 st.set_page_config(page_title="tracKer Dashboard", layout="wide")                                                                                                                 
-st.title("📊 tracKer Dashboard")                                                                                                                                                  
+st.title("tracKer Dashboard")                                                                                                                                                     
                                                                                                                                                                                   
 @st.cache_resource                                                                                                                                                                
 def get_connection():                                                                                                                                                             
-    return psycopg2.connect(st.secrets["DATABASE_URL"])                                                                                                                           
+    return psycopg2.connect(                                                                                                                                                      
+        host=st.secrets["DB_HOST"],                                                                                                                                               
+        port=st.secrets["DB_PORT"],                                                                                                                                               
+        database=st.secrets["DB_NAME"],                                                                                                                                           
+        user=st.secrets["DB_USER"],                                                                                                                                               
+        password=st.secrets["DB_PASSWORD"],                                                                                                                                       
+        sslmode="require"                                                                                                                                                         
+    )                                                                                                                                                                             
                                                                                                                                                                                   
 conn = get_connection()                                                                                                                                                           
                                                                                                                                                                                   
@@ -52,10 +59,9 @@ user_ids = pd.read_sql("SELECT DISTINCT user_id FROM chunks", conn)
 selected_user = st.selectbox("Select User", user_ids['user_id'].tolist())                                                                                                         
                                                                                                                                                                                   
 if selected_user:                                                                                                                                                                 
-    user_chunks = pd.read_sql(f"""                                                                                                                                                
+    user_chunks = pd.read_sql("""                                                                                                                                                 
         SELECT created_at, is_active, duration_seconds                                                                                                                            
         FROM chunks WHERE user_id = %s                                                                                                                                            
         ORDER BY created_at DESC LIMIT 50                                                                                                                                         
     """, conn, params=(selected_user,))                                                                                                                                           
-    st.dataframe(user_chunks, use_container_width=True)                                                                                                                           
-                                                          
+    st.dataframe(user_chunks, use_container_width=True)
