@@ -26,39 +26,67 @@ def check_password():
         st.markdown("""
         <style>
             .stApp { background: #f8f9fa; }
-            .password-container {
+            [data-testid="stMainBlockContainer"] {
                 max-width: 400px;
                 margin: 15vh auto;
                 padding: 2rem;
                 background: white;
                 border-radius: 16px;
                 box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-                text-align: center;
             }
             .password-title {
                 font-size: 1.5rem;
                 font-weight: 600;
                 color: #2d3748;
                 margin-bottom: 0.5rem;
+                text-align: center;
             }
             .password-hint {
                 color: #6c757d;
                 font-size: 0.9rem;
                 margin-bottom: 1.5rem;
+                text-align: center;
             }
         </style>
         """, unsafe_allow_html=True)
         
         st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
     
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error
+        st.markdown("""
+        <style>
+            .stApp { background: #f8f9fa; }
+            [data-testid="stMainBlockContainer"] {
+                max-width: 400px;
+                margin: 15vh auto;
+                padding: 2rem;
+                background: white;
+                border-radius: 16px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            }
+            .password-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #2d3748;
+                margin-bottom: 0.5rem;
+                text-align: center;
+            }
+            .password-hint {
+                color: #6c757d;
+                font-size: 0.9rem;
+                margin-bottom: 1.5rem;
+                text-align: center;
+            }
+        </style>
+        """, unsafe_allow_html=True)
+        
         st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
-        st.text_input("Password", type="password", on_change=password_entered, key="password")
+        st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
         return False
     
