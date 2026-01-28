@@ -5,7 +5,7 @@ from datetime import datetime
 
 st.set_page_config(
     page_title="tracKer Dashboard",
-    page_icon="📊",
+    page_icon="🦓",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
@@ -13,6 +13,15 @@ st.set_page_config(
 # Password protection
 def check_password():
     """Returns True if the user entered the correct password."""
+    
+    walking_k_small = '''<svg style="display:inline-block;width:24px;height:32px;vertical-align:middle;margin:0 -2px;" viewBox="0 0 40 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="20" cy="6" r="5" fill="#E8913A"/>
+        <line x1="20" y1="11" x2="20" y2="35" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="20" y1="18" x2="32" y2="8" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="20" y1="18" x2="10" y2="24" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="20" y1="35" x2="32" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+        <line x1="20" y1="35" x2="8" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+    </svg>'''
     
     def password_entered():
         if st.session_state["password"] == st.secrets["DASHBOARD_PASSWORD"]:
@@ -50,7 +59,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown('<div class="password-title">Our tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title">🦓 trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
@@ -84,7 +93,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown('<div class="password-title">Our tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title">🦓 trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
@@ -118,6 +127,14 @@ st.markdown("""
     
     .main-header span {
         color: #E8913A;
+    }
+    
+    .walking-k {
+        display: inline-block;
+        width: 32px;
+        height: 42px;
+        vertical-align: middle;
+        margin: 0 -3px;
     }
     
     .metric-card {
@@ -250,7 +267,16 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header (no subtitle)
-st.markdown('<h1 class="main-header"><span>Our tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
+walking_k_svg = '''<svg class="walking-k" viewBox="0 0 40 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="6" r="5" fill="#E8913A"/>
+    <line x1="20" y1="11" x2="20" y2="35" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="18" x2="32" y2="8" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="18" x2="10" y2="24" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="35" x2="32" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="35" x2="8" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
+</svg>'''
+
+st.markdown(f'<h1 class="main-header"><span>trac{walking_k_svg}er</span> Dashboard</h1>', unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
@@ -494,8 +520,17 @@ else:
     st.info("No users found in the database yet.")
 
 # Footer
+walking_k_footer = '''<svg style="display:inline-block;width:12px;height:16px;vertical-align:middle;margin:0 -1px;" viewBox="0 0 40 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="20" cy="6" r="5" fill="#9ca3af"/>
+    <line x1="20" y1="11" x2="20" y2="35" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="18" x2="32" y2="8" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="18" x2="10" y2="24" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="35" x2="32" y2="50" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+    <line x1="20" y1="35" x2="8" y2="50" stroke="#9ca3af" stroke-width="4" stroke-linecap="round"/>
+</svg>'''
+
 st.markdown(f"""
 <div style="text-align: center; color: #9ca3af; font-size: 0.75rem; padding: 2rem 0 1rem 0;">
-    tracKer Dashboard • {datetime.now().strftime('%H:%M:%S')}
+    trac{walking_k_footer}er Dashboard • {datetime.now().strftime('%H:%M:%S')}
 </div>
 """, unsafe_allow_html=True)
