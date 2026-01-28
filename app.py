@@ -158,7 +158,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header (no subtitle)
-st.markdown('<h1 class="main-header">📊 <span>tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header"><span>tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
@@ -190,7 +190,7 @@ with col2:
     passive = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'passive_%'", conn)
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-icon">🌙</div>
+        <div class="metric-icon">📱</div>
         <div class="metric-value">{passive.iloc[0, 0]:,}</div>
         <div class="metric-label">Passive Chunks</div>
     </div>
@@ -200,14 +200,14 @@ with col3:
     active = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'active_%'", conn)
     st.markdown(f"""
     <div class="metric-card">
-        <div class="metric-icon">⚡</div>
+        <div class="metric-icon">🚶</div>
         <div class="metric-value">{active.iloc[0, 0]:,}</div>
         <div class="metric-label">Active Chunks</div>
     </div>
     """, unsafe_allow_html=True)
 
 # Row 2: Top 3 Users
-st.markdown('<div class="section-title">🏆 Top 3 Users by Uploads</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Top 3 Users by Uploads</div>', unsafe_allow_html=True)
 
 top_users = pd.read_sql("""
     SELECT user_id, COUNT(*) as total_uploads
@@ -250,7 +250,7 @@ else:
     st.dataframe(top_users, use_container_width=True)
 
 # Row 3: Chunks over time
-st.markdown('<div class="section-title">📈 Chunks Uploaded Over Time</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Chunks Uploaded Over Time</div>', unsafe_allow_html=True)
 
 timeline = pd.read_sql("""
     SELECT DATE(start_time) as date,
@@ -308,14 +308,13 @@ if not timeline.empty:
 else:
     st.markdown("""
     <div class="empty-state">
-        <div class="empty-icon">📭</div>
         <div class="empty-title">No data in the last 30 days</div>
         <div class="empty-desc">Start collecting sensor data to see activity here</div>
     </div>
     """, unsafe_allow_html=True)
 
 # Row 4: Filter by user
-st.markdown('<div class="section-title">🔍 Filter by User</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Filter by User</div>', unsafe_allow_html=True)
 
 user_ids = pd.read_sql("SELECT DISTINCT user_id FROM sensor_readings", conn)
 user_list = user_ids['user_id'].tolist()
@@ -353,14 +352,14 @@ if user_list:
         with user_stat_cols[1]:
             st.markdown(f"""
             <div class="stat-box">
-                <div class="stat-label">⚡ Active</div>
+                <div class="stat-label">🚶 Active</div>
                 <div class="stat-value accent-orange">{stats_row[1]:,}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[2]:
             st.markdown(f"""
             <div class="stat-box">
-                <div class="stat-label">🌙 Passive</div>
+                <div class="stat-label">📱 Passive</div>
                 <div class="stat-value accent-slate">{stats_row[2]:,}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -385,7 +384,7 @@ if user_list:
         if rows:
             user_chunks = pd.DataFrame(rows, columns=['start_time', 'end_time', 'chunk_id'])
             user_chunks['Type'] = user_chunks['chunk_id'].apply(
-                lambda x: '⚡ Active' if str(x).startswith('active_') else '🌙 Passive'
+                lambda x: '🚶 Active' if str(x).startswith('active_') else '📱 Passive'
             )
             user_chunks['start_time'] = pd.to_datetime(user_chunks['start_time']).dt.strftime('%Y-%m-%d %H:%M')
             user_chunks['end_time'] = pd.to_datetime(user_chunks['end_time']).dt.strftime('%Y-%m-%d %H:%M')
