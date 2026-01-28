@@ -84,7 +84,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown('<div class="password-title">🎸 tracKer Dashboard</div>', unsafe_allow_html=True)
+        st.markdown('<div class="password-title">Our tracKer Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
@@ -250,7 +250,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Header (no subtitle)
-st.markdown('<h1 class="main-header"><span>tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
+st.markdown('<h1 class="main-header"><span>Our tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
