@@ -10,13 +10,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Clean, light theme CSS
+# Kinetikos Health color palette
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     .stApp {
-        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%);
+        background: #f8f9fa;
     }
     
     * { font-family: 'Inter', sans-serif; }
@@ -24,49 +24,41 @@ st.markdown("""
     .main-header {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #1a1a2e;
+        color: #1a1a1a;
         text-align: center;
-        padding: 1rem 0;
+        padding: 1.5rem 0 2rem 0;
     }
     
     .main-header span {
-        background: linear-gradient(90deg, #6366f1, #8b5cf6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .sub-header {
-        color: #64748b;
-        text-align: center;
-        margin-bottom: 2rem;
+        color: #E8913A;
     }
     
     .metric-card {
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
         text-align: center;
         transition: transform 0.2s, box-shadow 0.2s;
     }
     
     .metric-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
     
-    .metric-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    .metric-icon { font-size: 2rem; margin-bottom: 0.5rem; }
     
     .metric-value {
         font-size: 2.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #2d3748;
     }
     
     .metric-label {
-        color: #64748b;
-        font-size: 0.9rem;
+        color: #6c757d;
+        font-size: 0.85rem;
         font-weight: 500;
         text-transform: uppercase;
         letter-spacing: 0.5px;
@@ -74,9 +66,9 @@ st.markdown("""
     }
     
     .section-title {
-        font-size: 1.25rem;
+        font-size: 1.1rem;
         font-weight: 600;
-        color: #1e293b;
+        color: #2d3748;
         margin: 2rem 0 1rem 0;
         display: flex;
         align-items: center;
@@ -85,25 +77,25 @@ st.markdown("""
     
     .podium-card {
         background: white;
-        border-radius: 16px;
-        padding: 1.5rem;
+        border-radius: 12px;
+        padding: 1.25rem;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
     }
     
-    .gold-border { border-top: 4px solid #fbbf24; }
+    .gold-border { border-top: 4px solid #E8913A; }
     .silver-border { border-top: 4px solid #9ca3af; }
-    .bronze-border { border-top: 4px solid #d97706; }
+    .bronze-border { border-top: 4px solid #b87333; }
     
     .rank-badge {
-        font-size: 2rem;
+        font-size: 1.75rem;
         margin-bottom: 0.5rem;
     }
     
     .user-id {
-        font-size: 0.85rem;
-        color: #64748b;
+        font-size: 0.8rem;
+        color: #6c757d;
         word-break: break-all;
         margin: 0.5rem 0;
     }
@@ -111,57 +103,62 @@ st.markdown("""
     .upload-count {
         font-size: 1.5rem;
         font-weight: 700;
-        color: #1e293b;
+        color: #2d3748;
+    }
+    
+    .upload-label {
+        font-size: 0.7rem;
+        color: #9ca3af;
     }
     
     .stat-box {
         background: white;
-        border-radius: 12px;
+        border-radius: 10px;
         padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        border: 1px solid #e9ecef;
     }
     
     .stat-label {
-        font-size: 0.75rem;
-        color: #64748b;
+        font-size: 0.7rem;
+        color: #6c757d;
         text-transform: uppercase;
+        letter-spacing: 0.3px;
     }
     
     .stat-value {
-        font-size: 1.25rem;
+        font-size: 1.2rem;
         font-weight: 600;
-        color: #1e293b;
-    }
-    
-    .user-select-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1rem;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        border: 1px solid #e2e8f0;
+        color: #2d3748;
     }
     
     .empty-state {
         background: white;
-        border-radius: 16px;
+        border-radius: 12px;
         padding: 3rem;
         text-align: center;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        border: 1px solid #e9ecef;
     }
     
-    .empty-icon { font-size: 3rem; margin-bottom: 1rem; }
-    .empty-title { font-size: 1.1rem; color: #1e293b; font-weight: 600; }
-    .empty-desc { font-size: 0.9rem; color: #64748b; }
+    .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+    .empty-title { font-size: 1rem; color: #2d3748; font-weight: 600; }
+    .empty-desc { font-size: 0.85rem; color: #6c757d; }
+    
+    /* Orange accent for active elements */
+    .accent-orange { color: #E8913A; }
+    .accent-slate { color: #3d4f5f; }
     
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
+    
+    /* Style the selectbox */
+    .stSelectbox label { color: #2d3748; font-weight: 500; }
 </style>
 """, unsafe_allow_html=True)
 
-# Header
+# Header (no subtitle)
 st.markdown('<h1 class="main-header">📊 <span>tracKer</span> Dashboard</h1>', unsafe_allow_html=True)
-st.markdown('<p class="sub-header">Real-time Sensor Analytics</p>', unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
@@ -236,7 +233,7 @@ if len(top_users) >= 1:
                     <div class="rank-badge">{medals[i]}</div>
                     <div class="user-id">{user_display}</div>
                     <div class="upload-count">{user['total_uploads']:,}</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">uploads</div>
+                    <div class="upload-label">uploads</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -245,7 +242,7 @@ if len(top_users) >= 1:
                     <div class="rank-badge">{medals[i]}</div>
                     <div class="user-id">—</div>
                     <div class="upload-count">0</div>
-                    <div style="font-size: 0.75rem; color: #64748b;">uploads</div>
+                    <div class="upload-label">uploads</div>
                 </div>
                 """, unsafe_allow_html=True)
 else:
@@ -266,7 +263,7 @@ timeline = pd.read_sql("""
 
 if not timeline.empty:
     chart_data = timeline.set_index('date')[['active', 'passive']]
-    st.area_chart(chart_data, color=["#8b5cf6", "#6366f1"], height=300)
+    st.area_chart(chart_data, color=["#E8913A", "#3d4f5f"], height=280)
     
     # Stats row
     stat_cols = st.columns(4)
@@ -331,7 +328,6 @@ if user_list:
     )
     
     if selected_user:
-        # Use cursor for parameterized query to avoid pandas issues
         cursor = conn.cursor()
         cursor.execute("""
             SELECT 
@@ -346,7 +342,6 @@ if user_list:
         stats_row = cursor.fetchone()
         cursor.close()
         
-        # Display user stats
         user_stat_cols = st.columns(4)
         with user_stat_cols[0]:
             st.markdown(f"""
@@ -359,14 +354,14 @@ if user_list:
             st.markdown(f"""
             <div class="stat-box">
                 <div class="stat-label">⚡ Active</div>
-                <div class="stat-value">{stats_row[1]:,}</div>
+                <div class="stat-value accent-orange">{stats_row[1]:,}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[2]:
             st.markdown(f"""
             <div class="stat-box">
                 <div class="stat-label">🌙 Passive</div>
-                <div class="stat-value">{stats_row[2]:,}</div>
+                <div class="stat-value accent-slate">{stats_row[2]:,}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[3]:
@@ -378,7 +373,6 @@ if user_list:
             </div>
             """, unsafe_allow_html=True)
         
-        # User chunks table - use cursor for parameterized query
         cursor = conn.cursor()
         cursor.execute("""
             SELECT start_time, end_time, chunk_id
@@ -402,13 +396,13 @@ if user_list:
                 'chunk_id': 'Chunk ID'
             })
             
-            st.dataframe(display_df, use_container_width=True, height=350)
+            st.dataframe(display_df, use_container_width=True, height=300)
 else:
     st.info("No users found in the database yet.")
 
 # Footer
 st.markdown(f"""
-<div style="text-align: center; color: #94a3b8; font-size: 0.8rem; padding: 2rem 0 1rem 0;">
-    tracKer Dashboard • Last updated {datetime.now().strftime('%H:%M:%S')}
+<div style="text-align: center; color: #9ca3af; font-size: 0.75rem; padding: 2rem 0 1rem 0;">
+    tracKer Dashboard • {datetime.now().strftime('%H:%M:%S')}
 </div>
 """, unsafe_allow_html=True)
