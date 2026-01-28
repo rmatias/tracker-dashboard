@@ -118,7 +118,7 @@ st.markdown("""
     * { font-family: 'Inter', sans-serif; }
     
     .main-header {
-        font-size: 3rem;
+        font-size: 3.5rem;
         font-weight: 700;
         color: #2d3748;
         text-align: center;
@@ -127,8 +127,8 @@ st.markdown("""
     
     .walking-k {
         display: inline-block;
-        width: 44px;
-        height: 58px;
+        width: 52px;
+        height: 68px;
         vertical-align: middle;
         margin: 0 -2px;
     }
