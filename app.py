@@ -33,13 +33,17 @@ with col3:
     active = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'active_%'", conn)                                                                    
     st.metric("Active Chunks", active.iloc[0, 0])                                                                                                                                 
                                                                                                                                                                                   
-# Row 2: Latest uploads                                                                                                                                                           
-st.subheader("Latest Upload per User")                                                                                                                                            
-latest = pd.read_sql("""                                                                                                                                                          
-    SELECT user_id, MAX(end_time) as latest_upload                                                                                                                                
-    FROM sensor_readings GROUP BY user_id ORDER BY latest_upload DESC                                                                                                             
+# Row 2: Top 3 Users                                                                                                                                                              
+st.subheader("Top 3 Users by Uploads")                                                                                                                                            
+top_users = pd.read_sql("""                                                                                                                                                       
+    SELECT user_id, COUNT(*) as total_uploads                                                                                                                                     
+    FROM sensor_readings                                                                                                                                                          
+    GROUP BY user_id                                                                                                                                                              
+    ORDER BY total_uploads DESC                                                                                                                                                   
+    LIMIT 3                                                                                                                                                                       
 """, conn)                                                                                                                                                                        
-st.dataframe(latest, use_container_width=True)                                                                                                                                    
+top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]                                                                                                                          
+st.dataframe(top_users, use_container_width=True)                                                                                                                                 
                                                                                                                                                                                   
 # Row 3: Chunks over time                                                                                                                                                         
 st.subheader("Chunks Uploaded Over Time")                                                                                                                                         
