@@ -59,7 +59,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown(f'<div class="password-title"><span style="color:#E8913A;">trac{walking_k_small}er</span> <span style="color:#2d3748;">Dashboard</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title">trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
@@ -93,7 +93,7 @@ def check_password():
         </style>
         """, unsafe_allow_html=True)
         
-        st.markdown(f'<div class="password-title"><span style="color:#E8913A;">trac{walking_k_small}er</span> <span style="color:#2d3748;">Dashboard</span></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="password-title">trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
@@ -125,16 +125,12 @@ st.markdown("""
         padding: 1.5rem 0 2rem 0;
     }
     
-    .main-header .orange {
-        color: #E8913A;
-    }
-    
     .walking-k {
         display: inline-block;
-        width: 38px;
-        height: 50px;
+        width: 44px;
+        height: 58px;
         vertical-align: middle;
-        margin: 0 -3px;
+        margin: 0 -2px;
     }
     
     .metric-card {
@@ -276,7 +272,7 @@ walking_k_svg = '''<svg class="walking-k" viewBox="0 0 40 52" fill="none" xmlns=
     <line x1="20" y1="35" x2="8" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
 </svg>'''
 
-st.markdown(f'<h1 class="main-header"><span class="orange">trac{walking_k_svg}er</span> Dashboard</h1>', unsafe_allow_html=True)
+st.markdown(f'<h1 class="main-header">trac{walking_k_svg}er Dashboard</h1>', unsafe_allow_html=True)
 
 @st.cache_resource
 def get_connection():
