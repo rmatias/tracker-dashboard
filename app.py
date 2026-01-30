@@ -267,12 +267,6 @@ st.markdown("""
     .stLineChart canvas, .stBarChart canvas, .stAreaChart canvas {
         pointer-events: none;
     }
-    
-    /* Hide Y-axis on charts */
-    svg g[aria-roledescription="axis"][aria-label*="y" i],
-    svg g[aria-roledescription="axis"][aria-label*="Y"] {
-        visibility: hidden !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -404,7 +398,7 @@ else:
     st.dataframe(top_users, use_container_width=True)
 
 # Row 3: Daily Activity Signature (hourly bins)
-st.markdown('<div class="section-title">Our Daily Activity Signature</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Our Avg Daily Activity Signature</div>', unsafe_allow_html=True)
 
 # Fetch all chunks for hourly distribution
 chunks_for_hourly = pd.read_sql(f"""
