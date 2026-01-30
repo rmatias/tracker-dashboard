@@ -301,33 +301,50 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    passive = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'passive_%'", conn)
+    passive = pd.read_sql("""
+        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes 
+        FROM sensor_readings 
+        WHERE chunk_id LIKE 'passive_%'
+    """, conn)
+    total_mins = int(passive.iloc[0, 0])
+    hours = total_mins // 60
+    mins = total_mins % 60
+    time_display = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-icon">📱</div>
-        <div class="metric-value">{passive.iloc[0, 0]:,}</div>
-        <div class="metric-label">Passive Chunks</div>
+        <div class="metric-value">{time_display}</div>
+        <div class="metric-label">Passive Time</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    active = pd.read_sql("SELECT COUNT(*) as count FROM sensor_readings WHERE chunk_id LIKE 'active_%'", conn)
+    active = pd.read_sql("""
+        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes 
+        FROM sensor_readings 
+        WHERE chunk_id LIKE 'active_%'
+    """, conn)
+    total_mins = int(active.iloc[0, 0])
+    hours = total_mins // 60
+    mins = total_mins % 60
+    time_display = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-icon">🚶</div>
-        <div class="metric-value">{active.iloc[0, 0]:,}</div>
-        <div class="metric-label">Active Chunks</div>
+        <div class="metric-value">{time_display}</div>
+        <div class="metric-label">Active Time</div>
     </div>
     """, unsafe_allow_html=True)
 
 # Row 2: Top 3 Users
-st.markdown('<div class="section-title">Top 3 Users by Uploads</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Top 3 Users by Recording Time</div>', unsafe_allow_html=True)
 
 top_users = pd.read_sql("""
-    SELECT user_id, COUNT(*) as total_uploads
+    SELECT user_id, 
+           COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
     FROM sensor_readings
     GROUP BY user_id
-    ORDER BY total_uploads DESC
+    ORDER BY total_minutes DESC
     LIMIT 3
 """, conn)
 
@@ -342,12 +359,16 @@ if len(top_users) >= 1:
             if i < len(top_users):
                 user = top_users.iloc[i]
                 user_display = user['user_id'][:16] + "..." if len(str(user['user_id'])) > 16 else user['user_id']
+                total_mins = int(user['total_minutes'])
+                hours = total_mins // 60
+                mins = total_mins % 60
+                time_display = f"{hours}h {mins}m" if hours > 0 else f"{mins}m"
                 st.markdown(f"""
                 <div class="podium-card {borders[i]}">
                     <div class="rank-badge">{medals[i]}</div>
                     <div class="user-id">{user_display}</div>
-                    <div class="upload-count">{user['total_uploads']:,}</div>
-                    <div class="upload-label">uploads</div>
+                    <div class="upload-count">{time_display}</div>
+                    <div class="upload-label">recorded</div>
                 </div>
                 """, unsafe_allow_html=True)
             else:
@@ -355,21 +376,21 @@ if len(top_users) >= 1:
                 <div class="podium-card {borders[i]}">
                     <div class="rank-badge">{medals[i]}</div>
                     <div class="user-id">—</div>
-                    <div class="upload-count">0</div>
-                    <div class="upload-label">uploads</div>
+                    <div class="upload-count">0m</div>
+                    <div class="upload-label">recorded</div>
                 </div>
                 """, unsafe_allow_html=True)
 else:
     top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]
     st.dataframe(top_users, use_container_width=True)
 
-# Row 3: Chunks over time
-st.markdown('<div class="section-title">Chunks Uploaded Over Time</div>', unsafe_allow_html=True)
+# Row 3: Recording time over time
+st.markdown('<div class="section-title">Recording Time Over Time</div>', unsafe_allow_html=True)
 
 timeline = pd.read_sql("""
     SELECT DATE(start_time) as date,
-           SUM(CASE WHEN chunk_id LIKE 'active_%' THEN 1 ELSE 0 END) as active,
-           SUM(CASE WHEN chunk_id LIKE 'passive_%' THEN 1 ELSE 0 END) as passive
+           COALESCE(SUM(CASE WHEN chunk_id LIKE 'active_%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as active,
+           COALESCE(SUM(CASE WHEN chunk_id LIKE 'passive_%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as passive
     FROM sensor_readings
     WHERE start_time > NOW() - INTERVAL '30 days'
     GROUP BY date ORDER BY date
@@ -381,14 +402,21 @@ if not timeline.empty:
     
     # Stats row
     stat_cols = st.columns(4)
-    total_chunks = int(timeline['active'].sum() + timeline['passive'].sum())
-    avg_daily = total_chunks / max(len(timeline), 1)
+    total_mins = int(timeline['active'].sum() + timeline['passive'].sum())
+    total_hours = total_mins // 60
+    total_remaining_mins = total_mins % 60
+    total_display = f"{total_hours}h {total_remaining_mins}m" if total_hours > 0 else f"{total_mins}m"
+    
+    avg_daily_mins = total_mins / max(len(timeline), 1)
+    avg_hours = int(avg_daily_mins) // 60
+    avg_mins = int(avg_daily_mins) % 60
+    avg_display = f"{avg_hours}h {avg_mins}m" if avg_hours > 0 else f"{int(avg_daily_mins)}m"
     
     with stat_cols[0]:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Total (30d)</div>
-            <div class="stat-value">{total_chunks:,}</div>
+            <div class="stat-value">{total_display}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -396,7 +424,7 @@ if not timeline.empty:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Daily Avg</div>
-            <div class="stat-value">{avg_daily:.0f}</div>
+            <div class="stat-value">{avg_display}</div>
         </div>
         """, unsafe_allow_html=True)
     
@@ -444,9 +472,9 @@ if user_list:
         cursor = conn.cursor()
         cursor.execute("""
             SELECT 
-                COUNT(*) as total,
-                SUM(CASE WHEN chunk_id LIKE 'active_%%' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN chunk_id LIKE 'passive_%%' THEN 1 ELSE 0 END) as passive,
+                COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes,
+                COALESCE(SUM(CASE WHEN chunk_id LIKE 'active_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as active_minutes,
+                COALESCE(SUM(CASE WHEN chunk_id LIKE 'passive_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as passive_minutes,
                 MIN(start_time) as first_upload,
                 MAX(start_time) as last_upload
             FROM sensor_readings 
@@ -455,26 +483,33 @@ if user_list:
         stats_row = cursor.fetchone()
         cursor.close()
         
+        # Format durations
+        def format_duration(mins):
+            mins = int(mins)
+            hours = mins // 60
+            remaining = mins % 60
+            return f"{hours}h {remaining}m" if hours > 0 else f"{mins}m"
+        
         user_stat_cols = st.columns(4)
         with user_stat_cols[0]:
             st.markdown(f"""
             <div class="stat-box">
-                <div class="stat-label">Total Chunks</div>
-                <div class="stat-value">{stats_row[0]:,}</div>
+                <div class="stat-label">Total Time</div>
+                <div class="stat-value">{format_duration(stats_row[0])}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[1]:
             st.markdown(f"""
             <div class="stat-box">
                 <div class="stat-label">🚶 Active</div>
-                <div class="stat-value accent-orange">{stats_row[1]:,}</div>
+                <div class="stat-value accent-orange">{format_duration(stats_row[1])}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[2]:
             st.markdown(f"""
             <div class="stat-box">
                 <div class="stat-label">📱 Passive</div>
-                <div class="stat-value accent-slate">{stats_row[2]:,}</div>
+                <div class="stat-value accent-slate">{format_duration(stats_row[2])}</div>
             </div>
             """, unsafe_allow_html=True)
         with user_stat_cols[3]:
