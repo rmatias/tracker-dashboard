@@ -448,12 +448,20 @@ if not chunks_for_hourly.empty:
                    '8pm', '9pm', '10pm', '11pm']
     filtered_bins = hourly_bins[6:24]  # Hours 6-23
     
+    # Use categorical index to preserve order
     hourly_df = pd.DataFrame({
+        'Hour': pd.Categorical(hour_labels, categories=hour_labels, ordered=True),
         'Minutes': filtered_bins
-    }, index=hour_labels)
+    })
     
-    # Display bar chart
-    st.bar_chart(hourly_df, color="#E8913A", height=280, use_container_width=True)
+    # Display bar chart using Altair for proper ordering
+    import altair as alt
+    chart = alt.Chart(hourly_df).mark_bar(color='#E8913A').encode(
+        x=alt.X('Hour:N', sort=hour_labels, axis=alt.Axis(labelAngle=0, title=None)),
+        y=alt.Y('Minutes:Q', axis=None)
+    ).properties(height=280)
+    
+    st.altair_chart(chart, use_container_width=True)
 else:
     st.markdown("""
     <div class="empty-state">
