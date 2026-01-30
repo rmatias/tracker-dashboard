@@ -259,6 +259,14 @@ st.markdown("""
     .stLineChart svg path {
         stroke-width: 3px !important;
     }
+    
+    /* Disable zoom/scroll on charts */
+    .stLineChart, .stBarChart, .stAreaChart {
+        pointer-events: none;
+    }
+    .stLineChart canvas, .stBarChart canvas, .stAreaChart canvas {
+        pointer-events: none;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -389,7 +397,64 @@ else:
     top_users.index = ["1st", "2nd", "3rd"][:len(top_users)]
     st.dataframe(top_users, use_container_width=True)
 
-# Row 3: Recording time over time
+# Row 3: Daily Activity Signature (hourly bins)
+st.markdown('<div class="section-title">Our Daily Activity Signature</div>', unsafe_allow_html=True)
+
+# Fetch all chunks for hourly distribution
+chunks_for_hourly = pd.read_sql(f"""
+    SELECT start_time, end_time
+    FROM sensor_readings
+    WHERE {EXCLUDE_CLAUSE} AND start_time IS NOT NULL AND end_time IS NOT NULL
+""", conn)
+
+if not chunks_for_hourly.empty:
+    # Initialize 24 hour bins
+    hourly_bins = [0.0] * 24
+    
+    # Calculate proportional minutes for each chunk
+    for _, row in chunks_for_hourly.iterrows():
+        start = row['start_time']
+        end = row['end_time']
+        
+        if pd.isna(start) or pd.isna(end) or end <= start:
+            continue
+        
+        # Iterate through each hour the chunk touches
+        current = start.replace(minute=0, second=0, microsecond=0)
+        while current < end:
+            hour = current.hour
+            bin_start = current
+            bin_end = current + pd.Timedelta(hours=1)
+            
+            # Calculate overlap
+            overlap_start = max(start, bin_start)
+            overlap_end = min(end, bin_end)
+            
+            if overlap_end > overlap_start:
+                overlap_minutes = (overlap_end - overlap_start).total_seconds() / 60
+                hourly_bins[hour] += overlap_minutes
+            
+            current = bin_end
+    
+    # Create DataFrame for chart
+    hour_labels = [f"{h}:00" for h in range(24)]
+    hourly_df = pd.DataFrame({
+        'Hour': hour_labels,
+        'Minutes': hourly_bins
+    })
+    hourly_df = hourly_df.set_index('Hour')
+    
+    # Display bar chart
+    st.bar_chart(hourly_df, color="#E8913A", height=280)
+else:
+    st.markdown("""
+    <div class="empty-state">
+        <div class="empty-title">No data available</div>
+        <div class="empty-desc">Start collecting sensor data to see daily patterns</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Row 4: Recording time over time
 st.markdown('<div class="section-title">Recording Time Over Time</div>', unsafe_allow_html=True)
 
 timeline = pd.read_sql(f"""
