@@ -267,6 +267,12 @@ st.markdown("""
     .stLineChart canvas, .stBarChart canvas, .stAreaChart canvas {
         pointer-events: none;
     }
+    
+    /* Hide Y-axis on charts */
+    svg g[aria-roledescription="axis"][aria-label*="y" i],
+    svg g[aria-roledescription="axis"][aria-label*="Y"] {
+        visibility: hidden !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -436,16 +442,18 @@ if not chunks_for_hourly.empty:
             
             current = bin_end
     
-    # Create DataFrame for chart
-    hour_labels = [f"{h}:00" for h in range(24)]
+    # Create DataFrame for chart - only 6am to 11pm (hours 6-23)
+    hour_labels = ['6am', '7am', '8am', '9am', '10am', '11am', '12pm', 
+                   '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', 
+                   '8pm', '9pm', '10pm', '11pm']
+    filtered_bins = hourly_bins[6:24]  # Hours 6-23
+    
     hourly_df = pd.DataFrame({
-        'Hour': hour_labels,
-        'Minutes': hourly_bins
-    })
-    hourly_df = hourly_df.set_index('Hour')
+        'Minutes': filtered_bins
+    }, index=hour_labels)
     
     # Display bar chart
-    st.bar_chart(hourly_df, color="#E8913A", height=280)
+    st.bar_chart(hourly_df, color="#E8913A", height=280, use_container_width=True)
 else:
     st.markdown("""
     <div class="empty-state">
