@@ -465,7 +465,7 @@ else:
     """, unsafe_allow_html=True)
 
 # Row 4: Recording time over time
-st.markdown('<div class="section-title">Recording Time Over Time</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Recording Time</div>', unsafe_allow_html=True)
 
 timeline = pd.read_sql(f"""
     SELECT DATE(start_time) as date,
@@ -477,8 +477,19 @@ timeline = pd.read_sql(f"""
 """, conn)
 
 if not timeline.empty:
-    chart_data = timeline.set_index('date')[['active', 'passive']]
-    st.line_chart(chart_data, color=["#E8913A", "#3d4f5f"], height=280)
+    # Melt data for Altair
+    timeline_melted = timeline.melt(id_vars=['date'], value_vars=['active', 'passive'], 
+                                     var_name='Type', value_name='Minutes')
+    
+    # Create Altair line chart with proper date axis
+    import altair as alt
+    line_chart = alt.Chart(timeline_melted).mark_line(strokeWidth=3).encode(
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
+        y=alt.Y('Minutes:Q', axis=None),
+        color=alt.Color('Type:N', scale=alt.Scale(domain=['active', 'passive'], range=['#E8913A', '#3d4f5f']), legend=alt.Legend(orient='bottom', title=None))
+    ).properties(height=280)
+    
+    st.altair_chart(line_chart, use_container_width=True)
     
     # Stats row
     stat_cols = st.columns(4)
