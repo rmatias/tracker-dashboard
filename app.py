@@ -352,10 +352,10 @@ with col3:
 st.markdown('<div class="section-title">Top 3 Users by Recording Time</div>', unsafe_allow_html=True)
 
 top_users = pd.read_sql(f"""
-    SELECT user_id, 
+    SELECT user_id,
            COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
     FROM sensor_readings
-    WHERE {EXCLUDE_CLAUSE}
+    WHERE chunk_id LIKE 'passive_%%' AND {EXCLUDE_CLAUSE}
     GROUP BY user_id
     ORDER BY total_minutes DESC
     LIMIT 3
