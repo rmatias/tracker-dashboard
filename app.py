@@ -503,10 +503,9 @@ daily_steps = pd.read_sql("""
 
 if not daily_steps.empty and len(daily_steps) >= 3:
     import numpy as np
+    import plotly.graph_objects as go
 
-    # Ensure date is datetime (not date object — Altair 5 needs this for :T)
     daily_steps['date'] = pd.to_datetime(daily_steps['date'])
-
     values = daily_steps['avg_steps'].astype(float).values
     q1 = float(np.percentile(values, 25))
     q3 = float(np.percentile(values, 75))
@@ -516,38 +515,41 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         lambda v: 'Typical' if q1 <= v <= q3 else 'Outlier'
     )
     daily_steps['avg_steps'] = daily_steps['avg_steps'].astype(float)
-    daily_steps['q1'] = q1
-    daily_steps['q3'] = q3
 
-    import altair as alt
+    typical = daily_steps[daily_steps['status'] == 'Typical']
+    outlier = daily_steps[daily_steps['status'] == 'Outlier']
 
-    base = alt.Chart(daily_steps).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0))
+    fig = go.Figure()
+
+    # Q1-Q3 shaded band
+    fig.add_hrect(y0=q1, y1=q3, fillcolor='#E8913A', opacity=0.12, line_width=0)
+    # Q1 and Q3 boundary lines
+    fig.add_hline(y=q1, line_color='#E8913A', line_width=1, opacity=0.4)
+    fig.add_hline(y=q3, line_color='#E8913A', line_width=1, opacity=0.4)
+
+    # Typical dots (orange)
+    fig.add_trace(go.Scatter(
+        x=typical['date'], y=typical['avg_steps'],
+        mode='markers', marker=dict(size=12, color='#E8913A'),
+        name='Typical', hovertemplate='%{x|%b %d}<br>%{y:,.0f} steps<extra>Typical</extra>'
+    ))
+    # Outlier dots (red)
+    fig.add_trace(go.Scatter(
+        x=outlier['date'], y=outlier['avg_steps'],
+        mode='markers', marker=dict(size=12, color='#c0392b'),
+        name='Outlier', hovertemplate='%{x|%b %d}<br>%{y:,.0f} steps<extra>Outlier</extra>'
+    ))
+
+    fig.update_layout(
+        height=260,
+        margin=dict(l=0, r=0, t=10, b=0),
+        plot_bgcolor='white', paper_bgcolor='white',
+        showlegend=False,
+        xaxis=dict(showgrid=False, tickformat='%b %d'),
+        yaxis=dict(showgrid=False, showticklabels=False),
     )
 
-    band = base.mark_area(color='#E8913A', opacity=0.15).encode(
-        y=alt.Y('q1:Q', axis=None),
-        y2='q3:Q'
-    )
-
-    q1_line = base.mark_line(color='#E8913A', opacity=0.4, strokeWidth=1).encode(y='q1:Q')
-    q3_line = base.mark_line(color='#E8913A', opacity=0.4, strokeWidth=1).encode(y='q3:Q')
-
-    dots = base.mark_circle(size=160).encode(
-        y=alt.Y('avg_steps:Q', axis=None),
-        color=alt.Color('status:N',
-            scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
-            legend=None
-        ),
-        tooltip=[
-            alt.Tooltip('date:T', title='Date', format='%b %d'),
-            alt.Tooltip('avg_steps:Q', title='Avg Steps', format=',.0f'),
-            alt.Tooltip('status:N', title='Status')
-        ]
-    )
-
-    chart = (band + q1_line + q3_line + dots).properties(height=260)
-    st.altair_chart(chart, use_container_width=True)
+    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
 
     # Stats below the chart
     typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
