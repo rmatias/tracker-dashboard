@@ -300,7 +300,7 @@ EXCLUDED_USERS = ["3D8E238E-CADD-4380-9340-DBFE379E8654"]
 EXCLUDE_CLAUSE = f"user_id NOT IN ({','.join([repr(u) for u in EXCLUDED_USERS])})"
 
 # Row 1: Key Metrics
-col1, col2, col3 = st.columns(3)
+col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     users = pd.read_sql(f"SELECT COUNT(DISTINCT user_id) as count FROM sensor_readings WHERE {EXCLUDE_CLAUSE}", conn)
@@ -313,9 +313,24 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
+    steps = pd.read_sql(f"""
+        SELECT COALESCE(SUM(step_count), 0) as total_steps
+        FROM sensor_readings
+        WHERE step_count IS NOT NULL AND {EXCLUDE_CLAUSE}
+    """, conn)
+    total_steps = int(steps.iloc[0, 0])
+    st.markdown(f"""
+    <div class="metric-card">
+        <div class="metric-icon">👟</div>
+        <div class="metric-value">{total_steps:,}</div>
+        <div class="metric-label">Total Steps</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
     passive = pd.read_sql(f"""
-        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes 
-        FROM sensor_readings 
+        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
+        FROM sensor_readings
         WHERE chunk_id LIKE 'passive_%' AND {EXCLUDE_CLAUSE}
     """, conn)
     total_mins = int(passive.iloc[0, 0])
@@ -330,10 +345,10 @@ with col2:
     </div>
     """, unsafe_allow_html=True)
 
-with col3:
+with col4:
     active = pd.read_sql(f"""
-        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes 
-        FROM sensor_readings 
+        SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
+        FROM sensor_readings
         WHERE chunk_id LIKE 'active_%' AND {EXCLUDE_CLAUSE}
     """, conn)
     total_mins = int(active.iloc[0, 0])
