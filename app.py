@@ -476,6 +476,13 @@ timeline = pd.read_sql(f"""
     GROUP BY date ORDER BY date
 """, conn)
 
+# New all-time total (not capped at 30 days)
+all_time_total = pd.read_sql(f"""
+    SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
+    FROM sensor_readings
+    WHERE {EXCLUDE_CLAUSE}
+""", conn)
+
 if not timeline.empty:
     # Melt data for Altair
     timeline_melted = timeline.melt(id_vars=['date'], value_vars=['active', 'passive'], 
@@ -492,7 +499,14 @@ if not timeline.empty:
     st.altair_chart(line_chart, use_container_width=True)
     
     # Stats row
-    stat_cols = st.columns(4)
+    stat_cols = st.columns(5)
+
+    # All-time total (not capped to 30d)
+    all_time_mins = int(all_time_total.iloc[0, 0])
+    all_time_hours = all_time_mins // 60
+    all_time_remaining_mins = all_time_mins % 60
+    all_time_display = f"{all_time_hours}h {all_time_remaining_mins}m" if all_time_hours > 0 else f"{all_time_mins}m"
+
     total_mins = int(timeline['active'].sum() + timeline['passive'].sum())
     total_hours = total_mins // 60
     total_remaining_mins = total_mins % 60
@@ -502,8 +516,16 @@ if not timeline.empty:
     avg_hours = int(avg_daily_mins) // 60
     avg_mins = int(avg_daily_mins) % 60
     avg_display = f"{avg_hours}h {avg_mins}m" if avg_hours > 0 else f"{int(avg_daily_mins)}m"
-    
+
     with stat_cols[0]:
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Total</div>
+            <div class="stat-value">{all_time_display}</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with stat_cols[1]:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Total (30d)</div>
@@ -511,7 +533,7 @@ if not timeline.empty:
         </div>
         """, unsafe_allow_html=True)
     
-    with stat_cols[1]:
+    with stat_cols[2]:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Daily Avg</div>
@@ -519,7 +541,7 @@ if not timeline.empty:
         </div>
         """, unsafe_allow_html=True)
     
-    with stat_cols[2]:
+    with stat_cols[3]:
         peak_idx = (timeline['active'] + timeline['passive']).idxmax()
         peak_day = str(timeline.loc[peak_idx, 'date'])
         st.markdown(f"""
@@ -529,7 +551,7 @@ if not timeline.empty:
         </div>
         """, unsafe_allow_html=True)
     
-    with stat_cols[3]:
+    with stat_cols[4]:
         passive_sum = timeline['passive'].sum()
         ratio = timeline['active'].sum() / passive_sum if passive_sum > 0 else 0
         st.markdown(f"""
