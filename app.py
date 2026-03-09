@@ -503,9 +503,11 @@ daily_steps = pd.read_sql("""
 
 if not daily_steps.empty and len(daily_steps) >= 3:
     import numpy as np
-    import altair as alt
 
-    values = daily_steps['avg_steps'].values
+    # Ensure date is datetime (not date object — Altair 5 needs this for :T)
+    daily_steps['date'] = pd.to_datetime(daily_steps['date'])
+
+    values = daily_steps['avg_steps'].astype(float).values
     q1 = float(np.percentile(values, 25))
     q3 = float(np.percentile(values, 75))
     median_val = float(np.percentile(values, 50))
@@ -513,28 +515,25 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     daily_steps['status'] = daily_steps['avg_steps'].apply(
         lambda v: 'Typical' if q1 <= v <= q3 else 'Outlier'
     )
+    daily_steps['avg_steps'] = daily_steps['avg_steps'].astype(float)
     daily_steps['q1'] = q1
     daily_steps['q3'] = q3
 
-    # Melt q1/q3 for range band — same pattern as the working Recording Time chart
-    band_df = daily_steps[['date', 'q1', 'q3']].copy()
+    import altair as alt
 
-    band = alt.Chart(band_df).mark_area(color='#E8913A', opacity=0.15).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
+    base = alt.Chart(daily_steps).encode(
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0))
+    )
+
+    band = base.mark_area(color='#E8913A', opacity=0.15).encode(
         y=alt.Y('q1:Q', axis=None),
         y2='q3:Q'
-    ).properties(height=260)
+    )
 
-    q1_line = alt.Chart(band_df).mark_line(
-        color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(x='date:T', y='q1:Q').properties(height=260)
+    q1_line = base.mark_line(color='#E8913A', opacity=0.4, strokeWidth=1).encode(y='q1:Q')
+    q3_line = base.mark_line(color='#E8913A', opacity=0.4, strokeWidth=1).encode(y='q3:Q')
 
-    q3_line = alt.Chart(band_df).mark_line(
-        color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(x='date:T', y='q3:Q').properties(height=260)
-
-    dots = alt.Chart(daily_steps).mark_circle(size=160).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
+    dots = base.mark_circle(size=160).encode(
         y=alt.Y('avg_steps:Q', axis=None),
         color=alt.Color('status:N',
             scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
@@ -545,9 +544,10 @@ if not daily_steps.empty and len(daily_steps) >= 3:
             alt.Tooltip('avg_steps:Q', title='Avg Steps', format=',.0f'),
             alt.Tooltip('status:N', title='Status')
         ]
-    ).properties(height=260)
+    )
 
-    st.altair_chart(band + q1_line + q3_line + dots, use_container_width=True)
+    chart = (band + q1_line + q3_line + dots).properties(height=260)
+    st.altair_chart(chart, use_container_width=True)
 
     # Stats below the chart
     typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
