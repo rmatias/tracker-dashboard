@@ -480,7 +480,7 @@ else:
     """, unsafe_allow_html=True)
 
 # Row 3.5: Daily Steps Vitals (IQR dot-on-range)
-st.markdown('<div class="section-title">Avg Daily Steps (All Users)</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Avg Daily Steps</div>', unsafe_allow_html=True)
 
 daily_steps = pd.read_sql("""
     WITH daily_user_steps AS (
@@ -514,14 +514,7 @@ if not daily_steps.empty and len(daily_steps) >= 3:
 
     import altair as alt
 
-    # Q1-Q3 band
-    band = alt.Chart(daily_steps).mark_rect(
-        color='#E8913A', opacity=0.15
-    ).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
-        x2='date:T',
-    ).properties(height=260)
-
+    # Q1-Q3 shaded band
     band_area = alt.Chart(pd.DataFrame({
         'date_min': [daily_steps['date'].min()],
         'date_max': [daily_steps['date'].max()],
@@ -534,27 +527,19 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         y2='q3:Q'
     )
 
-    # Median dashed line
-    median_line = alt.Chart(pd.DataFrame({
-        'date_min': [daily_steps['date'].min()],
-        'date_max': [daily_steps['date'].max()],
-        'median': [median_val]
-    })).mark_rule(strokeDash=[4, 4], color='#E8913A', opacity=0.5).encode(
-        y='median:Q'
-    )
+    # Q1 and Q3 boundary lines
+    q_lines_df = pd.DataFrame({
+        'value': [q1, q3],
+        'label': ['Q1', 'Q3']
+    })
+    q_lines = alt.Chart(q_lines_df).mark_rule(
+        color='#E8913A', opacity=0.4, strokeWidth=1
+    ).encode(y='value:Q')
 
-    # Connecting line
-    line = alt.Chart(daily_steps).mark_line(
-        color='#E8913A', opacity=0.3, strokeWidth=1.5
-    ).encode(
-        x='date:T',
-        y='avg_steps:Q'
-    )
-
-    # Dots colored by status
-    dots = alt.Chart(daily_steps).mark_circle(size=80).encode(
+    # Dots colored by status — bigger, no line
+    dots = alt.Chart(daily_steps).mark_circle(size=160).encode(
         x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
-        y=alt.Y('avg_steps:Q', axis=alt.Axis(title=None, format=',')),
+        y=alt.Y('avg_steps:Q', axis=None),
         color=alt.Color('status:N',
             scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
             legend=None
@@ -566,12 +551,15 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         ]
     )
 
-    vitals_chart = (band_area + median_line + line + dots).properties(height=260)
+    vitals_chart = (band_area + q_lines + dots).configure_view(
+        strokeWidth=0
+    ).properties(height=260)
     st.altair_chart(vitals_chart, use_container_width=True)
 
     # Stats below the chart
-    iqr = q3 - q1
-    vitals_cols = st.columns(4)
+    typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
+    outlier_pct = 100 - typical_pct
+    vitals_cols = st.columns(5)
     with vitals_cols[0]:
         st.markdown(f"""
         <div class="stat-box">
@@ -594,11 +582,17 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         </div>
         """, unsafe_allow_html=True)
     with vitals_cols[3]:
-        typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Typical Days</div>
             <div class="stat-value">{typical_pct}%</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with vitals_cols[4]:
+        st.markdown(f"""
+        <div class="stat-box">
+            <div class="stat-label">Outlier Days</div>
+            <div class="stat-value" style="color: #c0392b;">{outlier_pct}%</div>
         </div>
         """, unsafe_allow_html=True)
 else:
