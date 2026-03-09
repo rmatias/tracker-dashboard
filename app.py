@@ -523,23 +523,20 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     })).mark_rect(color='#E8913A', opacity=0.15).encode(
         x='date_min:T',
         x2='date_max:T',
-        y='q1:Q',
+        y=alt.Y('q1:Q', scale=alt.Scale(zero=False)),
         y2='q3:Q'
     )
 
     # Q1 and Q3 boundary lines
-    q_lines_df = pd.DataFrame({
-        'value': [q1, q3],
-        'label': ['Q1', 'Q3']
-    })
+    q_lines_df = pd.DataFrame({'value': [q1, q3]})
     q_lines = alt.Chart(q_lines_df).mark_rule(
         color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(y='value:Q')
+    ).encode(y=alt.Y('value:Q', scale=alt.Scale(zero=False)))
 
-    # Dots colored by status — bigger, no line
+    # Dots colored by status
     dots = alt.Chart(daily_steps).mark_circle(size=160).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
-        y=alt.Y('avg_steps:Q', axis=None),
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0, grid=False)),
+        y=alt.Y('avg_steps:Q', axis=None, scale=alt.Scale(zero=False)),
         color=alt.Color('status:N',
             scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
             legend=None
@@ -551,9 +548,9 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         ]
     )
 
-    vitals_chart = (band_area + q_lines + dots).configure_view(
-        strokeWidth=0
-    ).properties(height=260)
+    vitals_chart = alt.layer(band_area, q_lines, dots).properties(
+        height=260
+    ).configure_view(strokeWidth=0)
     st.altair_chart(vitals_chart, use_container_width=True)
 
     # Stats below the chart
