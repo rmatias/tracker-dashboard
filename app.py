@@ -295,15 +295,15 @@ def get_connection():
 
 conn = get_connection()
 
-# Excluded test users
-EXCLUDED_USERS = ["3D8E238E-CADD-4380-9340-DBFE379E8654"]
-EXCLUDE_CLAUSE = f"user_id NOT IN ({','.join([repr(u) for u in EXCLUDED_USERS])})"
+# Excluded from Top 3 podium only (early tester with unfair head start)
+PODIUM_EXCLUDED_USERS = ["3D8E238E-CADD-4380-9340-DBFE379E8654"]
+PODIUM_EXCLUDE_CLAUSE = f"user_id NOT IN ({','.join([repr(u) for u in PODIUM_EXCLUDED_USERS])})"
 
 # Row 1: Key Metrics
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    users = pd.read_sql(f"SELECT COUNT(DISTINCT user_id) as count FROM sensor_readings WHERE {EXCLUDE_CLAUSE}", conn)
+    users = pd.read_sql("SELECT COUNT(DISTINCT user_id) as count FROM sensor_readings", conn)
     st.markdown(f"""
     <div class="metric-card">
         <div class="metric-icon">👥</div>
@@ -313,10 +313,10 @@ with col1:
     """, unsafe_allow_html=True)
 
 with col2:
-    steps = pd.read_sql(f"""
+    steps = pd.read_sql("""
         SELECT COALESCE(SUM(step_count), 0) as total_steps
         FROM sensor_readings
-        WHERE step_count IS NOT NULL AND {EXCLUDE_CLAUSE}
+        WHERE step_count IS NOT NULL
     """, conn)
     total_steps = int(steps.iloc[0, 0])
     st.markdown(f"""
@@ -328,10 +328,10 @@ with col2:
     """, unsafe_allow_html=True)
 
 with col3:
-    passive = pd.read_sql(f"""
+    passive = pd.read_sql("""
         SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
         FROM sensor_readings
-        WHERE chunk_id LIKE 'passive_%' AND {EXCLUDE_CLAUSE}
+        WHERE chunk_id LIKE 'passive_%'
     """, conn)
     total_mins = int(passive.iloc[0, 0])
     hours = total_mins // 60
@@ -346,10 +346,10 @@ with col3:
     """, unsafe_allow_html=True)
 
 with col4:
-    active = pd.read_sql(f"""
+    active = pd.read_sql("""
         SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
         FROM sensor_readings
-        WHERE chunk_id LIKE 'active_%' AND {EXCLUDE_CLAUSE}
+        WHERE chunk_id LIKE 'active_%'
     """, conn)
     total_mins = int(active.iloc[0, 0])
     hours = total_mins // 60
@@ -370,7 +370,7 @@ top_users = pd.read_sql(f"""
     SELECT user_id,
            COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
     FROM sensor_readings
-    WHERE chunk_id LIKE 'passive_%%' AND {EXCLUDE_CLAUSE}
+    WHERE chunk_id LIKE 'passive_%%' AND {PODIUM_EXCLUDE_CLAUSE}
     GROUP BY user_id
     ORDER BY total_minutes DESC
     LIMIT 3
@@ -416,10 +416,10 @@ else:
 st.markdown('<div class="section-title">Our Avg Daily Activity Signature</div>', unsafe_allow_html=True)
 
 # Fetch all chunks for hourly distribution
-chunks_for_hourly = pd.read_sql(f"""
+chunks_for_hourly = pd.read_sql("""
     SELECT start_time, end_time
     FROM sensor_readings
-    WHERE {EXCLUDE_CLAUSE} AND start_time IS NOT NULL AND end_time IS NOT NULL
+    WHERE start_time IS NOT NULL AND end_time IS NOT NULL
 """, conn)
 
 if not chunks_for_hourly.empty:
@@ -482,20 +482,19 @@ else:
 # Row 4: Recording time over time
 st.markdown('<div class="section-title">Recording Time</div>', unsafe_allow_html=True)
 
-timeline = pd.read_sql(f"""
+timeline = pd.read_sql("""
     SELECT DATE(start_time) as date,
-           COALESCE(SUM(CASE WHEN chunk_id LIKE 'active_%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as active,
-           COALESCE(SUM(CASE WHEN chunk_id LIKE 'passive_%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as passive
+           COALESCE(SUM(CASE WHEN chunk_id LIKE 'active_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as active,
+           COALESCE(SUM(CASE WHEN chunk_id LIKE 'passive_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as passive
     FROM sensor_readings
-    WHERE start_time > NOW() - INTERVAL '30 days' AND {EXCLUDE_CLAUSE}
+    WHERE start_time > NOW() - INTERVAL '30 days'
     GROUP BY date ORDER BY date
 """, conn)
 
 # New all-time total (not capped at 30 days)
-all_time_total = pd.read_sql(f"""
+all_time_total = pd.read_sql("""
     SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes
     FROM sensor_readings
-    WHERE {EXCLUDE_CLAUSE}
 """, conn)
 
 if not timeline.empty:
@@ -586,7 +585,7 @@ else:
 # Row 4: Filter by user
 st.markdown('<div class="section-title">Filter by User</div>', unsafe_allow_html=True)
 
-user_ids = pd.read_sql(f"SELECT DISTINCT user_id FROM sensor_readings WHERE {EXCLUDE_CLAUSE}", conn)
+user_ids = pd.read_sql("SELECT DISTINCT user_id FROM sensor_readings", conn)
 user_list = user_ids['user_id'].tolist()
 
 if user_list:
