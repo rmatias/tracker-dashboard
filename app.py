@@ -516,33 +516,26 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     daily_steps['q1'] = q1
     daily_steps['q3'] = q3
 
-    # Q1-Q3 shaded band (using area between q1 and q3 on each row)
-    band = alt.Chart(daily_steps).mark_area(color='#E8913A', opacity=0.15).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0, grid=False)),
-        y=alt.Y('q1:Q', axis=None, scale=alt.Scale(zero=False)),
+    # Melt q1/q3 for range band — same pattern as the working Recording Time chart
+    band_df = daily_steps[['date', 'q1', 'q3']].copy()
+
+    band = alt.Chart(band_df).mark_area(color='#E8913A', opacity=0.15).encode(
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
+        y=alt.Y('q1:Q', axis=None),
         y2='q3:Q'
-    )
+    ).properties(height=260)
 
-    # Q1 boundary line
-    q1_line = alt.Chart(daily_steps).mark_line(
+    q1_line = alt.Chart(band_df).mark_line(
         color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(
-        x='date:T',
-        y='q1:Q'
-    )
+    ).encode(x='date:T', y='q1:Q').properties(height=260)
 
-    # Q3 boundary line
-    q3_line = alt.Chart(daily_steps).mark_line(
+    q3_line = alt.Chart(band_df).mark_line(
         color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(
-        x='date:T',
-        y='q3:Q'
-    )
+    ).encode(x='date:T', y='q3:Q').properties(height=260)
 
-    # Dots colored by status
     dots = alt.Chart(daily_steps).mark_circle(size=160).encode(
-        x='date:T',
-        y=alt.Y('avg_steps:Q', axis=None, scale=alt.Scale(zero=False)),
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0)),
+        y=alt.Y('avg_steps:Q', axis=None),
         color=alt.Color('status:N',
             scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
             legend=None
@@ -552,12 +545,9 @@ if not daily_steps.empty and len(daily_steps) >= 3:
             alt.Tooltip('avg_steps:Q', title='Avg Steps', format=',.0f'),
             alt.Tooltip('status:N', title='Status')
         ]
-    )
+    ).properties(height=260)
 
-    vitals_chart = alt.layer(band, q1_line, q3_line, dots).properties(
-        height=260
-    ).configure_view(strokeWidth=0)
-    st.altair_chart(vitals_chart, use_container_width=True)
+    st.altair_chart(band + q1_line + q3_line + dots, use_container_width=True)
 
     # Stats below the chart
     typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
