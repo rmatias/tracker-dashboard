@@ -480,7 +480,7 @@ else:
     """, unsafe_allow_html=True)
 
 # Row 3.5: Daily Steps Vitals (IQR dot-on-range)
-st.markdown('<div class="section-title">Avg Daily Steps</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-title">Our Avg Daily Activity Consistency</div>', unsafe_allow_html=True)
 
 daily_steps = pd.read_sql("""
     WITH daily_user_steps AS (
@@ -503,6 +503,8 @@ daily_steps = pd.read_sql("""
 
 if not daily_steps.empty and len(daily_steps) >= 3:
     import numpy as np
+    import altair as alt
+
     values = daily_steps['avg_steps'].values
     q1 = float(np.percentile(values, 25))
     q3 = float(np.percentile(values, 75))
@@ -511,31 +513,35 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     daily_steps['status'] = daily_steps['avg_steps'].apply(
         lambda v: 'Typical' if q1 <= v <= q3 else 'Outlier'
     )
+    daily_steps['q1'] = q1
+    daily_steps['q3'] = q3
 
-    import altair as alt
-
-    # Q1-Q3 shaded band
-    band_area = alt.Chart(pd.DataFrame({
-        'date_min': [daily_steps['date'].min()],
-        'date_max': [daily_steps['date'].max()],
-        'q1': [q1],
-        'q3': [q3]
-    })).mark_rect(color='#E8913A', opacity=0.15).encode(
-        x='date_min:T',
-        x2='date_max:T',
-        y=alt.Y('q1:Q', scale=alt.Scale(zero=False)),
+    # Q1-Q3 shaded band (using area between q1 and q3 on each row)
+    band = alt.Chart(daily_steps).mark_area(color='#E8913A', opacity=0.15).encode(
+        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0, grid=False)),
+        y=alt.Y('q1:Q', axis=None, scale=alt.Scale(zero=False)),
         y2='q3:Q'
     )
 
-    # Q1 and Q3 boundary lines
-    q_lines_df = pd.DataFrame({'value': [q1, q3]})
-    q_lines = alt.Chart(q_lines_df).mark_rule(
+    # Q1 boundary line
+    q1_line = alt.Chart(daily_steps).mark_line(
         color='#E8913A', opacity=0.4, strokeWidth=1
-    ).encode(y=alt.Y('value:Q', scale=alt.Scale(zero=False)))
+    ).encode(
+        x='date:T',
+        y='q1:Q'
+    )
+
+    # Q3 boundary line
+    q3_line = alt.Chart(daily_steps).mark_line(
+        color='#E8913A', opacity=0.4, strokeWidth=1
+    ).encode(
+        x='date:T',
+        y='q3:Q'
+    )
 
     # Dots colored by status
     dots = alt.Chart(daily_steps).mark_circle(size=160).encode(
-        x=alt.X('date:T', axis=alt.Axis(format='%b %d', title=None, labelAngle=0, grid=False)),
+        x='date:T',
         y=alt.Y('avg_steps:Q', axis=None, scale=alt.Scale(zero=False)),
         color=alt.Color('status:N',
             scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']),
@@ -548,7 +554,7 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         ]
     )
 
-    vitals_chart = alt.layer(band_area, q_lines, dots).properties(
+    vitals_chart = alt.layer(band, q1_line, q3_line, dots).properties(
         height=260
     ).configure_view(strokeWidth=0)
     st.altair_chart(vitals_chart, use_container_width=True)
