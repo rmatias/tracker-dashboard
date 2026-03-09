@@ -554,7 +554,7 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     # Stats below the chart
     typical_pct = int(daily_steps['status'].value_counts().get('Typical', 0) / len(daily_steps) * 100)
     outlier_pct = 100 - typical_pct
-    vitals_cols = st.columns(5)
+    vitals_cols = st.columns(4)
     with vitals_cols[0]:
         st.markdown(f"""
         <div class="stat-box">
@@ -565,25 +565,18 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     with vitals_cols[1]:
         st.markdown(f"""
         <div class="stat-box">
-            <div class="stat-label">Q1 (25th)</div>
-            <div class="stat-value">{q1:,.0f}</div>
+            <div class="stat-label">Typical Range</div>
+            <div class="stat-value">{q1:,.0f} – {q3:,.0f}</div>
         </div>
         """, unsafe_allow_html=True)
     with vitals_cols[2]:
-        st.markdown(f"""
-        <div class="stat-box">
-            <div class="stat-label">Q3 (75th)</div>
-            <div class="stat-value">{q3:,.0f}</div>
-        </div>
-        """, unsafe_allow_html=True)
-    with vitals_cols[3]:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Typical Days</div>
             <div class="stat-value">{typical_pct}%</div>
         </div>
         """, unsafe_allow_html=True)
-    with vitals_cols[4]:
+    with vitals_cols[3]:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Outlier Days</div>
