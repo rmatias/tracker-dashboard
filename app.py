@@ -465,9 +465,10 @@ if not chunks_for_hourly.empty:
 
     # Display bar chart using Altair for proper ordering
     import altair as alt
-    chart = alt.Chart(hourly_df).mark_bar(color='#E8913A').encode(
+    chart = alt.Chart(hourly_df).mark_bar().encode(
         x=alt.X('Hour:N', sort=hour_labels, axis=alt.Axis(labelAngle=0, title=None)),
-        y=alt.Y('Minutes:Q', axis=None)
+        y=alt.Y('Minutes:Q', axis=None),
+        color=alt.Color('Minutes:Q', scale=alt.Scale(range=['#E8913A', '#c0392b']), legend=None)
     ).properties(height=280)
 
     st.altair_chart(chart, use_container_width=True)
@@ -515,9 +516,10 @@ if not weekly_steps.empty:
         'Steps': weekly_steps['avg_steps'].values
     })
 
-    weekly_chart = alt.Chart(weekly_df).mark_bar(color='#E8913A').encode(
+    weekly_chart = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X('Day:N', sort=day_order, axis=alt.Axis(labelAngle=0, title=None)),
-        y=alt.Y('Steps:Q', axis=None)
+        y=alt.Y('Steps:Q', axis=None),
+        color=alt.Color('Steps:Q', scale=alt.Scale(range=['#E8913A', '#c0392b']), legend=None)
     ).properties(height=280)
 
     st.altair_chart(weekly_chart, use_container_width=True)
