@@ -516,11 +516,8 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     lower = max(0, median_val - k * sigma_r)
     upper = median_val + k * sigma_r
 
-    # 3-day rolling mean for noise reduction on steps
-    daily_steps['smoothed'] = daily_steps['avg_steps'].rolling(window=3, min_periods=1).mean()
-
-    # Classify using smoothed values
-    daily_steps['status'] = daily_steps['smoothed'].apply(
+    # Classify using raw values (matches plotted dot positions)
+    daily_steps['status'] = daily_steps['avg_steps'].apply(
         lambda v: 'Typical' if lower <= v <= upper else 'Outlier'
     )
     daily_steps['avg_steps'] = daily_steps['avg_steps'].astype(float)
