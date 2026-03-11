@@ -479,6 +479,56 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
+# Row 3.25: Weekly Activity Signature (steps per day of week)
+st.markdown('<div class="section-title">Our Avg Weekly Activity Signature</div>', unsafe_allow_html=True)
+
+weekly_steps = pd.read_sql("""
+    WITH daily_user_steps AS (
+        SELECT
+            DATE(start_time) as date,
+            user_id,
+            SUM(step_count) as daily_steps
+        FROM sensor_readings
+        WHERE step_count IS NOT NULL
+        GROUP BY DATE(start_time), user_id
+    )
+    SELECT
+        EXTRACT(DOW FROM date) as dow,
+        AVG(daily_steps) as avg_steps
+    FROM daily_user_steps
+    GROUP BY dow
+    ORDER BY dow
+""", conn)
+
+if not weekly_steps.empty:
+    import altair as alt
+
+    # Map DOW (0=Sun in Postgres) to Monday-first labels
+    dow_map = {1: 'Mon', 2: 'Tue', 3: 'Wed', 4: 'Thu', 5: 'Fri', 6: 'Sat', 0: 'Sun'}
+    day_order = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+
+    weekly_steps['Day'] = weekly_steps['dow'].map(dow_map)
+    weekly_steps = weekly_steps[weekly_steps['Day'].notna()]
+
+    weekly_df = pd.DataFrame({
+        'Day': pd.Categorical(weekly_steps['Day'].values, categories=day_order, ordered=True),
+        'Steps': weekly_steps['avg_steps'].values
+    })
+
+    weekly_chart = alt.Chart(weekly_df).mark_bar(color='#E8913A').encode(
+        x=alt.X('Day:N', sort=day_order, axis=alt.Axis(labelAngle=0, title=None)),
+        y=alt.Y('Steps:Q', axis=None)
+    ).properties(height=280)
+
+    st.altair_chart(weekly_chart, use_container_width=True)
+else:
+    st.markdown("""
+    <div class="empty-state">
+        <div class="empty-title">No step data available</div>
+        <div class="empty-desc">Start collecting step data to see weekly patterns</div>
+    </div>
+    """, unsafe_allow_html=True)
+
 # Row 3.5: Daily Steps — Robust Personal Baseline (Median-MAD)
 st.markdown('<div class="section-title">Our Avg Daily Activity Consistency</div>', unsafe_allow_html=True)
 
