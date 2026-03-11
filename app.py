@@ -512,7 +512,7 @@ if not daily_steps.empty and len(daily_steps) >= 3:
     median_val = float(np.median(values))
     mad = float(np.median(np.abs(values - median_val)))
     sigma_r = 1.4826 * mad
-    k = 1.5
+    k = 1.0
     lower = max(0, median_val - k * sigma_r)
     upper = median_val + k * sigma_r
 
