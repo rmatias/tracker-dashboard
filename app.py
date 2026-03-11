@@ -458,17 +458,28 @@ if not chunks_for_hourly.empty:
     filtered_bins = hourly_bins[6:24]  # Hours 6-23
 
     # Use categorical index to preserve order
+    import numpy as np
+    import altair as alt
+
+    hourly_values = np.array(filtered_bins)
+    hourly_median = float(np.median(hourly_values))
+    hourly_mad = float(np.median(np.abs(hourly_values - hourly_median)))
+    hourly_sigma_r = 1.4826 * hourly_mad
+    hourly_lower = max(0, hourly_median - hourly_sigma_r)
+    hourly_upper = hourly_median + hourly_sigma_r
+
+    hourly_status = ['Typical' if hourly_lower <= v <= hourly_upper else 'Outlier' for v in filtered_bins]
+
     hourly_df = pd.DataFrame({
         'Hour': pd.Categorical(hour_labels, categories=hour_labels, ordered=True),
-        'Minutes': filtered_bins
+        'Minutes': filtered_bins,
+        'Status': hourly_status
     })
 
-    # Display bar chart using Altair for proper ordering
-    import altair as alt
     chart = alt.Chart(hourly_df).mark_bar().encode(
         x=alt.X('Hour:N', sort=hour_labels, axis=alt.Axis(labelAngle=0, title=None)),
         y=alt.Y('Minutes:Q', axis=None),
-        color=alt.Color('Minutes:Q', scale=alt.Scale(range=['#E8913A', '#c0392b']), legend=None)
+        color=alt.Color('Status:N', scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']), legend=None)
     ).properties(height=280)
 
     st.altair_chart(chart, use_container_width=True)
@@ -511,15 +522,26 @@ if not weekly_steps.empty:
     weekly_steps['Day'] = weekly_steps['dow'].map(dow_map)
     weekly_steps = weekly_steps[weekly_steps['Day'].notna()]
 
+    import numpy as np
+    weekly_values = weekly_steps['avg_steps'].values.astype(float)
+    weekly_median = float(np.median(weekly_values))
+    weekly_mad = float(np.median(np.abs(weekly_values - weekly_median)))
+    weekly_sigma_r = 1.4826 * weekly_mad
+    weekly_lower = max(0, weekly_median - weekly_sigma_r)
+    weekly_upper = weekly_median + weekly_sigma_r
+
+    weekly_status = ['Typical' if weekly_lower <= v <= weekly_upper else 'Outlier' for v in weekly_values]
+
     weekly_df = pd.DataFrame({
         'Day': pd.Categorical(weekly_steps['Day'].values, categories=day_order, ordered=True),
-        'Steps': weekly_steps['avg_steps'].values
+        'Steps': weekly_values,
+        'Status': weekly_status
     })
 
     weekly_chart = alt.Chart(weekly_df).mark_bar().encode(
         x=alt.X('Day:N', sort=day_order, axis=alt.Axis(labelAngle=0, title=None)),
         y=alt.Y('Steps:Q', axis=None),
-        color=alt.Color('Steps:Q', scale=alt.Scale(range=['#E8913A', '#c0392b']), legend=None)
+        color=alt.Color('Status:N', scale=alt.Scale(domain=['Typical', 'Outlier'], range=['#E8913A', '#c0392b']), legend=None)
     ).properties(height=280)
 
     st.altair_chart(weekly_chart, use_container_width=True)
