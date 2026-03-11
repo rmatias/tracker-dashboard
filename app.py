@@ -13,7 +13,7 @@ st.set_page_config(
 # Password protection
 def check_password():
     """Returns True if the user entered the correct password."""
-    
+
     walking_k_small = '''<svg style="display:inline-block;width:24px;height:32px;vertical-align:middle;margin:0 -2px;" viewBox="0 0 40 52" fill="none" xmlns="http://www.w3.org/2000/svg">
         <circle cx="20" cy="6" r="5" fill="#E8913A"/>
         <line x1="20" y1="11" x2="20" y2="35" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
@@ -22,7 +22,7 @@ def check_password():
         <line x1="20" y1="35" x2="32" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
         <line x1="20" y1="35" x2="8" y2="50" stroke="#E8913A" stroke-width="4" stroke-linecap="round"/>
     </svg>'''
-    
+
     def password_entered():
         if st.session_state["password"] == st.secrets["DASHBOARD_PASSWORD"]:
             st.session_state["password_correct"] = True
@@ -58,12 +58,12 @@ def check_password():
             }
         </style>
         """, unsafe_allow_html=True)
-        
+
         st.markdown(f'<div class="password-title">trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         return False
-    
+
     elif not st.session_state["password_correct"]:
         # Password incorrect, show input + error
         st.markdown("""
@@ -92,13 +92,13 @@ def check_password():
             }
         </style>
         """, unsafe_allow_html=True)
-        
+
         st.markdown(f'<div class="password-title">trac{walking_k_small}er Dashboard</div>', unsafe_allow_html=True)
         st.markdown('<div class="password-hint">Enter password to continue</div>', unsafe_allow_html=True)
         st.text_input("Password", type="password", on_change=password_entered, key="password", label_visibility="collapsed")
         st.error("Wrong password. Try again!")
         return False
-    
+
     else:
         # Password correct
         return True
@@ -110,13 +110,13 @@ if not check_password():
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-    
+
     .stApp {
         background: #f8f9fa;
     }
-    
+
     * { font-family: 'Inter', sans-serif; }
-    
+
     .main-header {
         font-size: 3rem;
         font-weight: 700;
@@ -124,7 +124,7 @@ st.markdown("""
         text-align: center;
         padding: 1.5rem 0 2rem 0;
     }
-    
+
     .walking-k {
         display: inline-block;
         width: 44px;
@@ -132,7 +132,7 @@ st.markdown("""
         vertical-align: middle;
         margin: 0 -2px;
     }
-    
+
     .metric-card {
         background: white;
         border-radius: 12px;
@@ -142,20 +142,20 @@ st.markdown("""
         text-align: center;
         transition: transform 0.2s, box-shadow 0.2s;
     }
-    
+
     .metric-card:hover {
         transform: translateY(-2px);
         box-shadow: 0 4px 20px rgba(0,0,0,0.1);
     }
-    
+
     .metric-icon { font-size: 2rem; margin-bottom: 0.5rem; }
-    
+
     .metric-value {
         font-size: 2.5rem;
         font-weight: 700;
         color: #2d3748;
     }
-    
+
     .metric-label {
         color: #6c757d;
         font-size: 0.85rem;
@@ -164,7 +164,7 @@ st.markdown("""
         letter-spacing: 0.5px;
         margin-top: 0.25rem;
     }
-    
+
     .section-title {
         font-size: 1.1rem;
         font-weight: 600;
@@ -174,7 +174,7 @@ st.markdown("""
         align-items: center;
         gap: 0.5rem;
     }
-    
+
     .podium-card {
         background: white;
         border-radius: 12px;
@@ -183,34 +183,34 @@ st.markdown("""
         box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         border: 1px solid #e9ecef;
     }
-    
+
     .gold-border { border-top: 4px solid #E8913A; }
     .silver-border { border-top: 4px solid #9ca3af; }
     .bronze-border { border-top: 4px solid #b87333; }
-    
+
     .rank-badge {
         font-size: 1.75rem;
         margin-bottom: 0.5rem;
     }
-    
+
     .user-id {
         font-size: 0.8rem;
         color: #6c757d;
         word-break: break-all;
         margin: 0.5rem 0;
     }
-    
+
     .upload-count {
         font-size: 1.5rem;
         font-weight: 700;
         color: #2d3748;
     }
-    
+
     .upload-label {
         font-size: 0.7rem;
         color: #9ca3af;
     }
-    
+
     .stat-box {
         background: white;
         border-radius: 10px;
@@ -218,20 +218,20 @@ st.markdown("""
         box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         border: 1px solid #e9ecef;
     }
-    
+
     .stat-label {
         font-size: 0.7rem;
         color: #6c757d;
         text-transform: uppercase;
         letter-spacing: 0.3px;
     }
-    
+
     .stat-value {
         font-size: 1.2rem;
         font-weight: 600;
         color: #2d3748;
     }
-    
+
     .empty-state {
         background: white;
         border-radius: 12px;
@@ -240,26 +240,26 @@ st.markdown("""
         box-shadow: 0 2px 12px rgba(0,0,0,0.06);
         border: 1px solid #e9ecef;
     }
-    
+
     .empty-icon { font-size: 2.5rem; margin-bottom: 1rem; }
     .empty-title { font-size: 1rem; color: #2d3748; font-weight: 600; }
     .empty-desc { font-size: 0.85rem; color: #6c757d; }
-    
+
     /* Orange accent for active elements */
     .accent-orange { color: #E8913A; }
     .accent-slate { color: #3d4f5f; }
-    
+
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    
+
     /* Style the selectbox */
     .stSelectbox label { color: #2d3748; font-weight: 500; }
-    
+
     /* Make chart lines thicker */
     .stLineChart svg path {
         stroke-width: 3px !important;
     }
-    
+
     /* Disable zoom/scroll on charts */
     .stLineChart, .stBarChart, .stAreaChart {
         pointer-events: none;
@@ -378,10 +378,10 @@ top_users = pd.read_sql(f"""
 
 if len(top_users) >= 1:
     podium_cols = st.columns(3)
-    
+
     medals = ["🥇", "🥈", "🥉"]
     borders = ["gold-border", "silver-border", "bronze-border"]
-    
+
     for i, col in enumerate(podium_cols):
         with col:
             if i < len(top_users):
@@ -425,51 +425,51 @@ chunks_for_hourly = pd.read_sql("""
 if not chunks_for_hourly.empty:
     # Initialize 24 hour bins
     hourly_bins = [0.0] * 24
-    
+
     # Calculate proportional minutes for each chunk
     for _, row in chunks_for_hourly.iterrows():
         start = row['start_time']
         end = row['end_time']
-        
+
         if pd.isna(start) or pd.isna(end) or end <= start:
             continue
-        
+
         # Iterate through each hour the chunk touches
         current = start.replace(minute=0, second=0, microsecond=0)
         while current < end:
             hour = current.hour
             bin_start = current
             bin_end = current + pd.Timedelta(hours=1)
-            
+
             # Calculate overlap
             overlap_start = max(start, bin_start)
             overlap_end = min(end, bin_end)
-            
+
             if overlap_end > overlap_start:
                 overlap_minutes = (overlap_end - overlap_start).total_seconds() / 60
                 hourly_bins[hour] += overlap_minutes
-            
+
             current = bin_end
-    
+
     # Create DataFrame for chart - only 6am to 11pm (hours 6-23)
-    hour_labels = ['6am', '7am', '8am', '9am', '10am', '11am', '12pm', 
-                   '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm', 
+    hour_labels = ['6am', '7am', '8am', '9am', '10am', '11am', '12pm',
+                   '1pm', '2pm', '3pm', '4pm', '5pm', '6pm', '7pm',
                    '8pm', '9pm', '10pm', '11pm']
     filtered_bins = hourly_bins[6:24]  # Hours 6-23
-    
+
     # Use categorical index to preserve order
     hourly_df = pd.DataFrame({
         'Hour': pd.Categorical(hour_labels, categories=hour_labels, ordered=True),
         'Minutes': filtered_bins
     })
-    
+
     # Display bar chart using Altair for proper ordering
     import altair as alt
     chart = alt.Chart(hourly_df).mark_bar(color='#E8913A').encode(
         x=alt.X('Hour:N', sort=hour_labels, axis=alt.Axis(labelAngle=0, title=None)),
         y=alt.Y('Minutes:Q', axis=None)
     ).properties(height=280)
-    
+
     st.altair_chart(chart, use_container_width=True)
 else:
     st.markdown("""
@@ -479,7 +479,7 @@ else:
     </div>
     """, unsafe_allow_html=True)
 
-# Row 3.5: Daily Steps Vitals (IQR dot-on-range)
+# Row 3.5: Daily Steps — Robust Personal Baseline (Median-MAD)
 st.markdown('<div class="section-title">Our Avg Daily Activity Consistency</div>', unsafe_allow_html=True)
 
 daily_steps = pd.read_sql("""
@@ -507,12 +507,21 @@ if not daily_steps.empty and len(daily_steps) >= 3:
 
     daily_steps['date'] = pd.to_datetime(daily_steps['date'])
     values = daily_steps['avg_steps'].astype(float).values
-    q1 = float(np.percentile(values, 25))
-    q3 = float(np.percentile(values, 75))
-    median_val = float(np.percentile(values, 50))
 
-    daily_steps['status'] = daily_steps['avg_steps'].apply(
-        lambda v: 'Typical' if q1 <= v <= q3 else 'Outlier'
+    # Median-MAD robust baseline
+    median_val = float(np.median(values))
+    mad = float(np.median(np.abs(values - median_val)))
+    sigma_r = 1.4826 * mad
+    k = 2.0
+    lower = max(0, median_val - k * sigma_r)
+    upper = median_val + k * sigma_r
+
+    # 3-day rolling mean for noise reduction on steps
+    daily_steps['smoothed'] = daily_steps['avg_steps'].rolling(window=3, min_periods=1).mean()
+
+    # Classify using smoothed values
+    daily_steps['status'] = daily_steps['smoothed'].apply(
+        lambda v: 'Typical' if lower <= v <= upper else 'Outlier'
     )
     daily_steps['avg_steps'] = daily_steps['avg_steps'].astype(float)
 
@@ -521,11 +530,13 @@ if not daily_steps.empty and len(daily_steps) >= 3:
 
     fig = go.Figure()
 
-    # Q1-Q3 shaded band
-    fig.add_hrect(y0=q1, y1=q3, fillcolor='#E8913A', opacity=0.12, line_width=0)
-    # Q1 and Q3 boundary lines
-    fig.add_hline(y=q1, line_color='#E8913A', line_width=1, opacity=0.4)
-    fig.add_hline(y=q3, line_color='#E8913A', line_width=1, opacity=0.4)
+    # Typical range band (Median +/- k * sigma_r)
+    fig.add_hrect(y0=lower, y1=upper, fillcolor='#E8913A', opacity=0.12, line_width=0)
+    # Lower and upper boundary lines
+    fig.add_hline(y=lower, line_color='#E8913A', line_width=1, opacity=0.4)
+    fig.add_hline(y=upper, line_color='#E8913A', line_width=1, opacity=0.4)
+    # Median dashed line
+    fig.add_hline(y=median_val, line_color='#E8913A', line_width=1, line_dash='dash', opacity=0.3)
 
     # Typical dots (orange)
     fig.add_trace(go.Scatter(
@@ -566,7 +577,7 @@ if not daily_steps.empty and len(daily_steps) >= 3:
         st.markdown(f"""
         <div class="stat-box">
             <div class="stat-label">Typical Range</div>
-            <div class="stat-value">{q1:,.0f} – {q3:,.0f}</div>
+            <div class="stat-value">{lower:,.0f} – {upper:,.0f}</div>
         </div>
         """, unsafe_allow_html=True)
     with vitals_cols[2]:
@@ -611,9 +622,9 @@ all_time_total = pd.read_sql("""
 
 if not timeline.empty:
     # Melt data for Altair
-    timeline_melted = timeline.melt(id_vars=['date'], value_vars=['active', 'passive'], 
+    timeline_melted = timeline.melt(id_vars=['date'], value_vars=['active', 'passive'],
                                      var_name='Type', value_name='Minutes')
-    
+
     # Create Altair line chart with proper date axis
     import altair as alt
     line_chart = alt.Chart(timeline_melted).mark_line(strokeWidth=3).encode(
@@ -621,9 +632,9 @@ if not timeline.empty:
         y=alt.Y('Minutes:Q', axis=None),
         color=alt.Color('Type:N', scale=alt.Scale(domain=['active', 'passive'], range=['#E8913A', '#3d4f5f']), legend=alt.Legend(orient='bottom', title=None))
     ).properties(height=280)
-    
+
     st.altair_chart(line_chart, use_container_width=True)
-    
+
     # Stats row
     stat_cols = st.columns(5)
 
@@ -637,7 +648,7 @@ if not timeline.empty:
     total_hours = total_mins // 60
     total_remaining_mins = total_mins % 60
     total_display = f"{total_hours}h {total_remaining_mins}m" if total_hours > 0 else f"{total_mins}m"
-    
+
     avg_daily_mins = total_mins / max(len(timeline), 1)
     avg_hours = int(avg_daily_mins) // 60
     avg_mins = int(avg_daily_mins) % 60
@@ -650,7 +661,7 @@ if not timeline.empty:
             <div class="stat-value">{all_time_display}</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with stat_cols[1]:
         st.markdown(f"""
         <div class="stat-box">
@@ -658,7 +669,7 @@ if not timeline.empty:
             <div class="stat-value">{total_display}</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with stat_cols[2]:
         st.markdown(f"""
         <div class="stat-box">
@@ -666,7 +677,7 @@ if not timeline.empty:
             <div class="stat-value">{avg_display}</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with stat_cols[3]:
         peak_idx = (timeline['active'] + timeline['passive']).idxmax()
         peak_day = str(timeline.loc[peak_idx, 'date'])
@@ -676,7 +687,7 @@ if not timeline.empty:
             <div class="stat-value" style="font-size: 1rem;">{peak_day}</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
     with stat_cols[4]:
         passive_sum = timeline['passive'].sum()
         ratio = timeline['active'].sum() / passive_sum if passive_sum > 0 else 0
@@ -706,29 +717,29 @@ if user_list:
         user_list,
         format_func=lambda x: f"{x[:30]}..." if len(str(x)) > 30 else x
     )
-    
+
     if selected_user:
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT 
+            SELECT
                 COALESCE(SUM(EXTRACT(EPOCH FROM (end_time - start_time))/60), 0) as total_minutes,
                 COALESCE(SUM(CASE WHEN chunk_id LIKE 'active_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as active_minutes,
                 COALESCE(SUM(CASE WHEN chunk_id LIKE 'passive_%%' THEN EXTRACT(EPOCH FROM (end_time - start_time))/60 ELSE 0 END), 0) as passive_minutes,
                 MIN(start_time) as first_upload,
                 MAX(start_time) as last_upload
-            FROM sensor_readings 
+            FROM sensor_readings
             WHERE user_id = %s
         """, (selected_user,))
         stats_row = cursor.fetchone()
         cursor.close()
-        
+
         # Format durations
         def format_duration(mins):
             mins = int(mins)
             hours = mins // 60
             remaining = mins % 60
             return f"{hours}h {remaining}m" if hours > 0 else f"{mins}m"
-        
+
         user_stat_cols = st.columns(4)
         with user_stat_cols[0]:
             st.markdown(f"""
@@ -759,7 +770,7 @@ if user_list:
                 <div class="stat-value" style="font-size: 1rem;">{last_upload}</div>
             </div>
             """, unsafe_allow_html=True)
-        
+
         cursor = conn.cursor()
         cursor.execute("""
             SELECT start_time, end_time, chunk_id
@@ -768,7 +779,7 @@ if user_list:
         """, (selected_user,))
         rows = cursor.fetchall()
         cursor.close()
-        
+
         if rows:
             user_chunks = pd.DataFrame(rows, columns=['start_time', 'end_time', 'chunk_id'])
             user_chunks['Type'] = user_chunks['chunk_id'].apply(
@@ -779,12 +790,12 @@ if user_list:
             )
             user_chunks['start_time'] = pd.to_datetime(user_chunks['start_time']).dt.strftime('%Y-%m-%d %H:%M')
             user_chunks['end_time'] = pd.to_datetime(user_chunks['end_time']).dt.strftime('%Y-%m-%d %H:%M')
-            
+
             display_df = user_chunks[['Type', 'start_time', 'end_time', 'Duration']].rename(columns={
                 'start_time': 'Start',
                 'end_time': 'End'
             })
-            
+
             st.dataframe(display_df, use_container_width=True, height=300, hide_index=True)
 else:
     st.info("No users found in the database yet.")
