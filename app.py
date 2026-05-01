@@ -290,10 +290,24 @@ def get_connection():
         database=st.secrets["DB_NAME"],
         user=st.secrets["DB_USER"],
         password=st.secrets["DB_PASSWORD"],
-        sslmode="require"
+        sslmode="require",
+        keepalives=1,
+        keepalives_idle=30,
+        keepalives_interval=10,
+        keepalives_count=5,
     )
 
-conn = get_connection()
+def get_live_connection():
+    conn = get_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT 1")
+    except (psycopg2.InterfaceError, psycopg2.OperationalError):
+        get_connection.clear()      # evict the dead handle from the cache
+        conn = get_connection()      # build a fresh one
+    return conn
+
+conn = get_live_connection()
 
 # Excluded from Top 3 podium only (early tester with unfair head start)
 PODIUM_EXCLUDED_USERS = ["3D8E238E-CADD-4380-9340-DBFE379E8654"]
